@@ -16,6 +16,7 @@ const Home = () => {
         <div>
             <Meta title={pageTitle} />
             <Header head={pageTitle} description={pageDescription} />
+            
             {/* Voting table */}
 
             <Table striped bordered hover variant="dark">

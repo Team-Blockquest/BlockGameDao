@@ -31,8 +31,16 @@ const Menu = () => {
                 <Nav>
                     <ul className="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
                         <li>
-                            <Link to="/about" className="nav-link px-2 link-secondary">
+                            <Link to="/chairperson" className="nav-link px-2 link-secondary">
                                Chairperson
+                            </Link>
+                        </li>
+                    </ul>
+
+                    <ul className="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+                        <li>
+                            <Link to="/teacher" className="nav-link px-2 link-secondary">
+                                Teacher
                             </Link>
                         </li>
                     </ul>

@@ -14,12 +14,14 @@
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.4",
     "hardhat": "^2.9.3",
+    "node-sass": "^7.0.1",
     "react": "^18.0.0",
     "react-bootstrap": "^2.2.3",
     "react-dom": "^18.0.0",
     "react-helmet": "^6.1.0",
     "react-router-dom": "^6.3.0",
     "react-scripts": "5.0.1",
+    "read-excel-file": "^5.2.28",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
