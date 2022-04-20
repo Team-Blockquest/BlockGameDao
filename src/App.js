@@ -1,63 +1,26 @@
-import React, { useEffect, useState } from 'react';
-// import { ethers } from 'ethers';
-// import TokenArtifact from '../ABI/zuri_voting.json';
-// import contractAddress from '../ABI/contract-address.json';
+import { Container } from "react-bootstrap";
+import { Routes, Route } from "react-router-dom";
 
-function App() {
-  
-  // async function _initialize() {
-  //   await _intializeEthers();
-  // }
-  
-  // const _intializeEthers = async () => {
-  //   // ethers connection for the smartcontract
-  //   const _provider = new ethers.providers.Web3Provider(window.ethereum);
+// Layout
+import Layout from "./layout/Layout";
 
-  //     const _token = new ethers.Contract(
-  //       contractAddress.Token,
-  //       TokenArtifact.abi,
-  //       _provider.getSigner(0)
-  //     );
+// pages
+import Home from "./pages/Home";
+import Chairperson from "./pages/Chairperson";
+import NotFound from "./pages/NotFound";
 
-  //     console.log(_token)
-  //   };
-    
-  //   // Connects to the smart contract token id (check /contracts/contract-address.json)
-  //   async function init() {
-  //     const [selectedAddress] = await window.ethereum.enable();
-  //     _initialize(selectedAddress);
-  //   }
-
-  //   useEffect(() => {
-  //     // When the page loads it will initialize the init function
-  //     // that we need to connect the frontend with the smartcontract
-  //     init();
-  //   }, []);
-    
+const App = () => {
     return (
-      <div style={{ padding: '3rem 5rem' }}>
-        <h1>Voting System</h1>
-        <div>
-          <h4>Chairperson: </h4>
-        </div>
-        <div>
-          <h4>Candidates</h4>
-          {/* {proposals.map((proposal, index) => {
-            const name = proposal.name;
-            const voteCount = proposal.voteCount._hex;
-            return (
-              <div key={index} style={{ padding: '1rem 0' }}>
-                🗳 {name} - {Number(voteCount)}
-                <button
-                  style={{ marginLeft: '2em' }}>
-                  Vote
-                </button>
-              </div>
-            );
-          })} */}
-        </div>
-      </div>
+        <Layout>
+            <Container>
+                <Routes>
+                    <Route path="/" element={<Home />} exact />
+                    <Route path="/about" element={<Chairperson />} />
+                    <Route element={<NotFound />} />
+                </Routes>
+            </Container>
+        </Layout>
     );
-  }  
+};
 
 export default App;
