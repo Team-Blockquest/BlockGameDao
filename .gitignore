@@ -32,3 +32,10 @@ typechain
 cache
 artifacts
 hardhat.config.js
+scripts/sign_message.js
+.gitignore
+.gitignore
+config-overrides.js
+package-lock.json
+package.json
+package-lock.json

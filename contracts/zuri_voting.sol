@@ -220,4 +220,13 @@ contract ZuriVoting is Ownable{
 		return true;
     }
 
+	function getVoteCount(uint index)
+    public 
+	view
+	onlyTeachers
+	returns(uint)
+	{
+    return candidates[index].voteCount;
+	}
+
 }

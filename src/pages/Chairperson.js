@@ -1,6 +1,8 @@
-import { React, useState } from 'react';
+import React, { useState, useEffect, useRef } from "react";
+import {ethers } from "ethers";
 import Header from '../components/Header';
 import Meta from '../components/Meta';
+import ZuriVotingABI from '../util/ZuriVoting.json';
 // import readXlsxFile from 'read-excel-file';
 import { 
     Table, 
@@ -12,6 +14,12 @@ import {
 
 
 const Chairperson = () => {
+    const zuriVotingContractAddress = "0x5fDA4c31d6535d65254Ccd752d7e21CbCEeE6097";
+    const zuriVotingABI = ZuriVotingABI.abi;
+
+    const tokenRef1 = useRef();
+    const tokenRef2 = useRef();
+
     const [show, setShow] = useState(false);
     // const excelRef = useRef();
 
@@ -22,17 +30,188 @@ const Chairperson = () => {
     const pageTitle = 'Chairperson'
     const pageDescription = 'Vote start or stop any election and set up an election'
 
-    const startElection = () => {
-        console.log("Election has been started");
+    const startElection = async () => {
+
+        const { ethereum } = window;
+        if(ethereum){
+            const provider = new ethers.providers.Web3Provider(ethereum);
+            const signer = provider.getSigner();
+            const zuriVotingContract = new ethers.Contract(
+                zuriVotingContractAddress,
+                zuriVotingABI,
+                signer
+            );
+        
+            const startVote = await zuriVotingContract.startVote();
+            window.alert(startVote);
+        
+            console.log("Election has been started");
+        }else{
+            window.alert("An error occured, unable to start vote");
+            console.log("Ethereum object doesn't exist!");
+        }
+       
     }
 
-    const stopElection = () => {
-        console.log("Election has been stopped");
+    const stopElection = async () => {
+        const { ethereum } = window;
+        if(ethereum){
+            const provider = new ethers.providers.Web3Provider(ethereum);
+            const signer = provider.getSigner();
+            const zuriVotingContract = new ethers.Contract(
+                zuriVotingContractAddress,
+                zuriVotingABI,
+                signer
+            );
+        
+            const endVote = await zuriVotingContract.endVote();
+            window.alert(endVote);
+        
+            console.log("Election has been stopped");
+        }else{
+            window.alert("An error occured, unable to start vote");
+            console.log("Ethereum object doesn't exist!");
+        }
+        
     }
 
-    const handleVote = () => {
-        console.log("Vote has been cast");
+    const handleVote = async() => {
+        const { ethereum } = window;
+        if(ethereum){
+            const provider = new ethers.providers.Web3Provider(ethereum);
+            const signer = provider.getSigner();
+            const zuriVotingContract = new ethers.Contract(
+                zuriVotingContractAddress,
+                zuriVotingABI,
+                signer
+            );
+        
+            const Vote = await zuriVotingContract.vote(
+                1
+            );
+            window.alert(Vote);
+        
+            console.log("Vote has been cast");
+        }else{
+            window.alert("An error occured, unable to start vote");
+            console.log("Ethereum object doesn't exist!");
+        }
     }
+
+    const addacandidate = async() => {
+
+        const { ethereum } = window;
+        if(ethereum){
+            const provider = new ethers.providers.Web3Provider(ethereum);
+            const signer = provider.getSigner();
+            const zuriVotingContract = new ethers.Contract(
+                zuriVotingContractAddress,
+                zuriVotingABI,
+                signer
+            );
+
+            const candidateAddress = tokenRef1.current.value;
+            const candidateName = tokenRef2.current.value;
+        
+            const addCan = await zuriVotingContract.addCandidate(
+                candidateAddress, candidateName, {
+                    gasLimit: 300000,
+                  }
+            );
+            window.alert(addCan);
+        
+            console.log("Candidate Added Successfully");
+        }else{
+            window.alert("An error occured, unable to start vote");
+            console.log("Ethereum object doesn't exist!");
+        }
+    }
+
+    const addTeacher = async() => {
+
+        const { ethereum } = window;
+        if(ethereum){
+            const provider = new ethers.providers.Web3Provider(ethereum);
+            const signer = provider.getSigner();
+            const zuriVotingContract = new ethers.Contract(
+                zuriVotingContractAddress,
+                zuriVotingABI,
+                signer
+            );
+
+            // const address = teacherAddr.current.value;
+        
+            const addCan = await zuriVotingContract.addTeacher(
+                // address, {
+                //     gasLimit: 300000,
+                //   }
+            );
+            window.alert(addCan);
+        
+            console.log("Teacher Added Successfully");
+        }else{
+            window.alert("An error occured, unable to start vote");
+            console.log("Ethereum object doesn't exist!");
+        }
+    }
+
+    const EnrollStudent = async() => {
+
+        const { ethereum } = window;
+        if(ethereum){
+            const provider = new ethers.providers.Web3Provider(ethereum);
+            const signer = provider.getSigner();
+            const zuriVotingContract = new ethers.Contract(
+                zuriVotingContractAddress,
+                zuriVotingABI,
+                signer
+            );
+
+            // const studentAddress = studentAddr.current.value;
+        
+            const addStud = await zuriVotingContract.EnrollStudent(
+                // studentAddress, {
+                //     gasLimit: 300000,
+                //   }
+            );
+            window.alert(addStud);
+        
+            console.log("Student Added Successfully");
+        }else{
+            window.alert("An error occured, unable to start vote");
+            console.log("Ethereum object doesn't exist!");
+        }
+    }
+
+    const checkAdmin = async () => {
+        try {
+          const { ethereum } = window;
+          if(ethereum){
+              const provider = new ethers.providers.Web3Provider(ethereum);
+              const signer = provider.getSigner();
+              const zuriVotingContract = new ethers.Contract(
+                  zuriVotingContractAddress,
+                  zuriVotingABI,
+                  signer
+              );
+    
+            const accounts = await ethereum.request({
+              method: "eth_requestAccounts",
+            });
+    
+            const check = await zuriVotingContract.adminAddresses(accounts[0]);
+    
+            if (check === false) {
+              window.alert("You are not an admin");
+              window.location.href = "/";
+            }
+          } else {
+            console.log("Ethereum object doesn't exist!");
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      };
 
     // Excel file upload
     // const uploadExcel = async (evt) => {
@@ -168,15 +347,16 @@ const Chairperson = () => {
             <Card>
                 <Form>
                     <Form.Group className="mb-3">
-                        <Form.Label>Election Name [Post to be contested]</Form.Label>
-                        <Form.Control type="text" placeholder="Senior Prefect" />
+                        <Form.Label>Candidates Info</Form.Label>
+                        <Form.Control ref={tokenRef1} type="text" placeholder="CandidateAddress" />
+                        <Form.Control ref={tokenRef2} type="text" placeholder="CandidateName" />
                     </Form.Group>
                     <Form.Group className="mb-3">
                         <Form.Label>Candidate addresses [Excel]</Form.Label>
                         <Form.Control type="file"/>
                     </Form.Group>
-                    <Button className="float-sm-end" variant="primary" align="right" size="sm" active>
-                        Create Election
+                    <Button className="float-sm-end" onClick={addacandidate} variant="primary" align="right" size="sm" active>
+                        Add Candidate
                     </Button>
                 </Form>
             </Card>
