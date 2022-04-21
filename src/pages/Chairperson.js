@@ -175,7 +175,7 @@ const Chairperson = () => {
                         <Form.Label>Candidate addresses [Excel]</Form.Label>
                         <Form.Control type="file"/>
                     </Form.Group>
-                    <Button className="float-sm-end" variant="primary" align="right" size="sm" active>
+                    <Button className="float-sm-end" variant="primary" size="sm" active>
                         Create Election
                     </Button>
                 </Form>

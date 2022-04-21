@@ -46,7 +46,7 @@ const Menu = () => {
                     </ul>
 
                     <div className="col-md-3 text-end justify-content-center">
-                        <button type="button" className="btn btn-outline-primary me-2" onClick={connectWallet}>
+                        <button type="button" className="btn btn-outline-primary me-2" style={{ width: "10rem"}} onClick={connectWallet}>
                             Connect Wallet
                         </button>
                     </div>
