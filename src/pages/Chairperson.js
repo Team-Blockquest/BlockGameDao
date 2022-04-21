@@ -9,7 +9,7 @@ import {
     Modal, 
     Button, 
     Form, 
-    Card
+    Container
 } from 'react-bootstrap';
 
 
@@ -343,8 +343,8 @@ const Chairperson = () => {
             <br></br>
 
             {/* Set up an election */}
-            <p className='lead text-capitalize'>Set Up an Election</p>
-            <Card>
+            <p className='lead text-capitalize text-center'>Set Up an Election</p>
+            <Container style={{ width: '30rem' }}>
                 <Form>
                     <Form.Group className="mb-3">
                         <Form.Label>Candidates Info</Form.Label>
@@ -355,11 +355,16 @@ const Chairperson = () => {
                         <Form.Label>Candidate addresses [Excel]</Form.Label>
                         <Form.Control type="file"/>
                     </Form.Group>
+<<<<<<< HEAD
                     <Button className="float-sm-end" onClick={addacandidate} variant="primary" align="right" size="sm" active>
                         Add Candidate
+=======
+                    <Button className="float-sm-end" variant="primary" size="sm" active>
+                        Create Election
+>>>>>>> b862acb2d0a7e5cd57b2c9082c0d491dade003e4
                     </Button>
                 </Form>
-            </Card>
+            </Container>
         </div>
     )
 }

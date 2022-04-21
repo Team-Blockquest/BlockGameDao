@@ -150,6 +150,7 @@ const Menu = () => {
                     </ul>
 
                     <div className="col-md-3 text-end justify-content-center">
+<<<<<<< HEAD
                     {walletConnected && address.length > 0 ? (
             <button
               onClick={disconnectWallet}
@@ -165,6 +166,11 @@ const Menu = () => {
               Connect Wallet
             </button>
           )}
+=======
+                        <button type="button" className="btn btn-outline-primary me-2" style={{ width: "10rem"}} onClick={connectWallet}>
+                            Connect Wallet
+                        </button>
+>>>>>>> b862acb2d0a7e5cd57b2c9082c0d491dade003e4
                     </div>
                 </Nav>
             </header>
