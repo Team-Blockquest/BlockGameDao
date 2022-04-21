@@ -7,7 +7,7 @@ import {
     Modal, 
     Button, 
     Form, 
-    Card
+    Container
 } from 'react-bootstrap';
 
 
@@ -164,8 +164,8 @@ const Chairperson = () => {
             <br></br>
 
             {/* Set up an election */}
-            <p className='lead text-capitalize'>Set Up an Election</p>
-            <Card>
+            <p className='lead text-capitalize text-center'>Set Up an Election</p>
+            <Container style={{ width: '30rem' }}>
                 <Form>
                     <Form.Group className="mb-3">
                         <Form.Label>Election Name [Post to be contested]</Form.Label>
@@ -179,7 +179,7 @@ const Chairperson = () => {
                         Create Election
                     </Button>
                 </Form>
-            </Card>
+            </Container>
         </div>
     )
 }

@@ -1,7 +1,7 @@
 import { React, useState } from 'react';
 import Header from '../components/Header';
 import Meta from '../components/Meta';
-import { Table, Modal, Button, Dropdown, DropdownButton } from 'react-bootstrap';
+import { Table, Modal, Button, Dropdown, DropdownButton, Form, Container } from 'react-bootstrap';
 
 const Teacher = () => {
     const [show, setShow] = useState(false);
@@ -81,6 +81,30 @@ const Teacher = () => {
                     </tr>
                 </tbody>
             </Table>
+
+            <br></br>
+            <br></br>
+            <br></br>
+            <br></br>
+
+            {/* Set up an election */}
+            <p className='lead text-capitalize text-center'>Set Up an Election</p>
+            <Container style={{ width: '30rem'}}>
+                <Form>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Election Name [Post to be contested]</Form.Label>
+                        <Form.Control type="text" placeholder="Senior Prefect" />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Candidate addresses [Excel]</Form.Label>
+                        <Form.Control type="file" />
+                    </Form.Group>
+                    <Button className="float-sm-end" variant="primary" align="right" size="sm" active>
+                        Create Election
+                    </Button>
+                </Form>
+            </Container>
+
         </div>
     )
 }
