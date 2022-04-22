@@ -5,13 +5,37 @@
 			"inputs": [
 				{
 					"internalType": "address",
-					"name": "_candidateAddress",
+					"name": "_address",
 					"type": "address"
+				}
+			],
+			"name": "addBoardOfDirectors",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "string",
+					"name": "_category",
+					"type": "string"
 				},
 				{
 					"internalType": "string",
-					"name": "_name",
+					"name": "candidateName",
 					"type": "string"
+				},
+				{
+					"internalType": "address",
+					"name": "candidateAddress",
+					"type": "address"
 				}
 			],
 			"name": "addCandidate",
@@ -26,18 +50,7 @@
 			"type": "function"
 		},
 		{
-			"inputs": [
-				{
-					"internalType": "string",
-					"name": "_ballotOfficialName",
-					"type": "string"
-				},
-				{
-					"internalType": "string",
-					"name": "_proposal",
-					"type": "string"
-				}
-			],
+			"inputs": [],
 			"stateMutability": "nonpayable",
 			"type": "constructor"
 		},
@@ -47,18 +60,37 @@
 				{
 					"indexed": false,
 					"internalType": "address",
-					"name": "recipient",
+					"name": "_address",
 					"type": "address"
 				}
 			],
-			"name": "AddStakeHolder",
+			"name": "AddBoardOfDirectors",
 			"type": "event"
 		},
 		{
 			"inputs": [
 				{
+					"internalType": "string",
+					"name": "_category",
+					"type": "string"
+				}
+			],
+			"name": "addCategories",
+			"outputs": [
+				{
+					"internalType": "string",
+					"name": "",
+					"type": "string"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
 					"internalType": "address",
-					"name": "addr",
+					"name": "_address",
 					"type": "address"
 				}
 			],
@@ -78,25 +110,89 @@
 			"inputs": [
 				{
 					"indexed": false,
-					"internalType": "uint256",
-					"name": "_id",
-					"type": "uint256"
-				},
-				{
-					"indexed": false,
-					"internalType": "string",
-					"name": "_name",
-					"type": "string"
-				},
-				{
-					"indexed": false,
 					"internalType": "address",
-					"name": "_address",
+					"name": "recipient",
 					"type": "address"
+				}
+			],
+			"name": "AddTeachers",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "candidatesCount",
+					"type": "uint256"
 				}
 			],
 			"name": "CandidateCreated",
 			"type": "event"
+		},
+		{
+			"inputs": [],
+			"name": "clearElection",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "string",
+					"name": "_position",
+					"type": "string"
+				}
+			],
+			"name": "compileVotes",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "total",
+					"type": "uint256"
+				},
+				{
+					"internalType": "uint256",
+					"name": "winnigVotes",
+					"type": "uint256"
+				},
+				{
+					"components": [
+						{
+							"internalType": "uint256",
+							"name": "id",
+							"type": "uint256"
+						},
+						{
+							"internalType": "string",
+							"name": "name",
+							"type": "string"
+						},
+						{
+							"internalType": "uint256",
+							"name": "category",
+							"type": "uint256"
+						},
+						{
+							"internalType": "address",
+							"name": "candidateAddress",
+							"type": "address"
+						},
+						{
+							"internalType": "uint256",
+							"name": "voteCount",
+							"type": "uint256"
+						}
+					],
+					"internalType": "struct ZuriVoting.Candidate[]",
+					"name": "",
+					"type": "tuple[]"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
 		},
 		{
 			"inputs": [
@@ -138,22 +234,67 @@
 			"type": "function"
 		},
 		{
+			"inputs": [
+				{
+					"internalType": "string",
+					"name": "_category",
+					"type": "string"
+				}
+			],
+			"name": "makeResultPublic",
+			"outputs": [
+				{
+					"components": [
+						{
+							"internalType": "uint256",
+							"name": "id",
+							"type": "uint256"
+						},
+						{
+							"internalType": "string",
+							"name": "name",
+							"type": "string"
+						},
+						{
+							"internalType": "uint256",
+							"name": "category",
+							"type": "uint256"
+						},
+						{
+							"internalType": "address",
+							"name": "candidateAddress",
+							"type": "address"
+						},
+						{
+							"internalType": "uint256",
+							"name": "voteCount",
+							"type": "uint256"
+						}
+					],
+					"internalType": "struct ZuriVoting.Candidate",
+					"name": "",
+					"type": "tuple"
+				},
+				{
+					"internalType": "string",
+					"name": "",
+					"type": "string"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
 			"anonymous": false,
 			"inputs": [
 				{
-					"indexed": true,
+					"indexed": false,
 					"internalType": "address",
-					"name": "previousOwner",
-					"type": "address"
-				},
-				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "newOwner",
+					"name": "_address",
 					"type": "address"
 				}
 			],
-			"name": "OwnershipTransferred",
+			"name": "RemoveBoardOfDirectors",
 			"type": "event"
 		},
 		{
@@ -166,7 +307,7 @@
 					"type": "address"
 				}
 			],
-			"name": "RemoveStakeHolder",
+			"name": "RemoveTeachers",
 			"type": "event"
 		},
 		{
@@ -205,6 +346,25 @@
 			"inputs": [
 				{
 					"internalType": "address",
+					"name": "_address",
+					"type": "address"
+				}
+			],
+			"name": "removeBoardOfDirectors",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
 					"name": "addr",
 					"type": "address"
 				}
@@ -221,9 +381,26 @@
 			"type": "function"
 		},
 		{
-			"inputs": [],
-			"name": "renounceOwnership",
-			"outputs": [],
+			"inputs": [
+				{
+					"internalType": "string",
+					"name": "_category",
+					"type": "string"
+				},
+				{
+					"internalType": "uint256[]",
+					"name": "_candidateID",
+					"type": "uint256[]"
+				}
+			],
+			"name": "setUpElection",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
 			"stateMutability": "nonpayable",
 			"type": "function"
 		},
@@ -237,30 +414,27 @@
 		{
 			"inputs": [
 				{
-					"internalType": "address",
-					"name": "newOwner",
-					"type": "address"
-				}
-			],
-			"name": "transferOwnership",
-			"outputs": [],
-			"stateMutability": "nonpayable",
-			"type": "function"
-		},
-		{
-			"inputs": [
-				{
 					"internalType": "uint256",
 					"name": "_candidateId",
 					"type": "uint256"
+				},
+				{
+					"internalType": "string",
+					"name": "_category",
+					"type": "string"
 				}
 			],
 			"name": "vote",
 			"outputs": [
 				{
-					"internalType": "bool",
-					"name": "success",
-					"type": "bool"
+					"internalType": "string",
+					"name": "",
+					"type": "string"
+				},
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
 				}
 			],
 			"stateMutability": "nonpayable",
@@ -286,26 +460,67 @@
 			"type": "event"
 		},
 		{
-			"inputs": [],
-			"name": "ballotOfficialName",
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "activeCandidate",
 			"outputs": [
 				{
-					"internalType": "string",
+					"internalType": "bool",
 					"name": "",
-					"type": "string"
+					"type": "bool"
 				}
 			],
 			"stateMutability": "view",
 			"type": "function"
 		},
 		{
-			"inputs": [],
-			"name": "boardOfDirectorsAddresses",
+			"inputs": [
+				{
+					"internalType": "string",
+					"name": "",
+					"type": "string"
+				}
+			],
+			"name": "activeElections",
 			"outputs": [
+				{
+					"internalType": "string",
+					"name": "category",
+					"type": "string"
+				},
+				{
+					"internalType": "bool",
+					"name": "VotesCounted",
+					"type": "bool"
+				},
+				{
+					"internalType": "bool",
+					"name": "makePublic",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
 				{
 					"internalType": "address",
 					"name": "",
 					"type": "address"
+				}
+			],
+			"name": "boardOfDirectorsAddresses",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
 				}
 			],
 			"stateMutability": "view",
@@ -332,8 +547,13 @@
 					"type": "string"
 				},
 				{
+					"internalType": "uint256",
+					"name": "category",
+					"type": "uint256"
+				},
+				{
 					"internalType": "address",
-					"name": "candidateAddr",
+					"name": "candidateAddress",
 					"type": "address"
 				},
 				{
@@ -359,13 +579,138 @@
 			"type": "function"
 		},
 		{
-			"inputs": [],
-			"name": "countResult",
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "categories",
 			"outputs": [
 				{
 					"internalType": "string",
 					"name": "",
 					"type": "string"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "string",
+					"name": "",
+					"type": "string"
+				}
+			],
+			"name": "Category",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "categoryRegistrationStatus",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "string",
+					"name": "",
+					"type": "string"
+				}
+			],
+			"name": "categoryWinner",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "id",
+					"type": "uint256"
+				},
+				{
+					"internalType": "string",
+					"name": "name",
+					"type": "string"
+				},
+				{
+					"internalType": "uint256",
+					"name": "category",
+					"type": "uint256"
+				},
+				{
+					"internalType": "address",
+					"name": "candidateAddress",
+					"type": "address"
+				},
+				{
+					"internalType": "uint256",
+					"name": "voteCount",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "chairperson",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "election",
+			"outputs": [
+				{
+					"internalType": "string",
+					"name": "category",
+					"type": "string"
+				},
+				{
+					"internalType": "bool",
+					"name": "VotesCounted",
+					"type": "bool"
+				},
+				{
+					"internalType": "bool",
+					"name": "makePublic",
+					"type": "bool"
 				}
 			],
 			"stateMutability": "view",
@@ -386,17 +731,34 @@
 		},
 		{
 			"inputs": [],
-			"name": "getAllCandidates",
+			"name": "fetchElection",
 			"outputs": [
 				{
-					"internalType": "string[]",
-					"name": "candidateName",
-					"type": "string[]"
-				},
-				{
-					"internalType": "uint256[]",
-					"name": "votecount",
-					"type": "uint256[]"
+					"components": [
+						{
+							"internalType": "string",
+							"name": "category",
+							"type": "string"
+						},
+						{
+							"internalType": "uint256[]",
+							"name": "candidatesID",
+							"type": "uint256[]"
+						},
+						{
+							"internalType": "bool",
+							"name": "VotesCounted",
+							"type": "bool"
+						},
+						{
+							"internalType": "bool",
+							"name": "makePublic",
+							"type": "bool"
+						}
+					],
+					"internalType": "struct ZuriVoting.Election[]",
+					"name": "",
+					"type": "tuple[]"
 				}
 			],
 			"stateMutability": "view",
@@ -405,12 +767,12 @@
 		{
 			"inputs": [
 				{
-					"internalType": "uint256",
-					"name": "index",
-					"type": "uint256"
+					"internalType": "string",
+					"name": "_category",
+					"type": "string"
 				}
 			],
-			"name": "getVoteCount",
+			"name": "getWinningCandidateId",
 			"outputs": [
 				{
 					"internalType": "uint256",
@@ -422,26 +784,83 @@
 			"type": "function"
 		},
 		{
-			"inputs": [],
-			"name": "owner",
-			"outputs": [
+			"inputs": [
 				{
-					"internalType": "address",
-					"name": "",
-					"type": "address"
+					"internalType": "string",
+					"name": "_category",
+					"type": "string"
 				}
 			],
-			"stateMutability": "view",
-			"type": "function"
-		},
-		{
-			"inputs": [],
-			"name": "proposal",
+			"name": "getWinningCandidateName",
 			"outputs": [
 				{
 					"internalType": "string",
 					"name": "",
 					"type": "string"
+				},
+				{
+					"components": [
+						{
+							"internalType": "uint256",
+							"name": "id",
+							"type": "uint256"
+						},
+						{
+							"internalType": "string",
+							"name": "name",
+							"type": "string"
+						},
+						{
+							"internalType": "uint256",
+							"name": "category",
+							"type": "uint256"
+						},
+						{
+							"internalType": "address",
+							"name": "candidateAddress",
+							"type": "address"
+						},
+						{
+							"internalType": "uint256",
+							"name": "voteCount",
+							"type": "uint256"
+						}
+					],
+					"internalType": "struct ZuriVoting.Candidate",
+					"name": "",
+					"type": "tuple"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "string",
+					"name": "_category",
+					"type": "string"
+				}
+			],
+			"name": "getWinningCandidateVoteCounts",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "showCategories",
+			"outputs": [
+				{
+					"internalType": "string[]",
+					"name": "",
+					"type": "string[]"
 				}
 			],
 			"stateMutability": "view",
@@ -475,6 +894,75 @@
 				}
 			],
 			"name": "teacherAddresses",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "viewResults",
+			"outputs": [
+				{
+					"components": [
+						{
+							"internalType": "uint256",
+							"name": "id",
+							"type": "uint256"
+						},
+						{
+							"internalType": "string",
+							"name": "name",
+							"type": "string"
+						},
+						{
+							"internalType": "uint256",
+							"name": "category",
+							"type": "uint256"
+						},
+						{
+							"internalType": "address",
+							"name": "candidateAddress",
+							"type": "address"
+						},
+						{
+							"internalType": "uint256",
+							"name": "voteCount",
+							"type": "uint256"
+						}
+					],
+					"internalType": "struct ZuriVoting.Candidate[]",
+					"name": "",
+					"type": "tuple[]"
+				},
+				{
+					"internalType": "string[]",
+					"name": "",
+					"type": "string[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				},
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"name": "votedForCategory",
 			"outputs": [
 				{
 					"internalType": "bool",
@@ -533,25 +1021,23 @@
 			"type": "function"
 		},
 		{
-			"inputs": [],
-			"name": "winnerName",
-			"outputs": [
+			"inputs": [
 				{
-					"internalType": "string",
-					"name": "winnerName_",
-					"type": "string"
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				},
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
 				}
 			],
-			"stateMutability": "view",
-			"type": "function"
-		},
-		{
-			"inputs": [],
-			"name": "winningCandidate",
+			"name": "votesForCategory",
 			"outputs": [
 				{
 					"internalType": "uint256",
-					"name": "winningCandidate_",
+					"name": "",
 					"type": "uint256"
 				}
 			],
