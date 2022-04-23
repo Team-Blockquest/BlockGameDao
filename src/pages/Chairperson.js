@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import {ethers } from "ethers";
+import {ethers, BigNumber } from "ethers";
 import Header from '../components/Header';
 import Meta from '../components/Meta';
 import ZuriVotingABI from '../util/ZuriVoting.json';
@@ -14,11 +14,17 @@ import {
 
 
 const Chairperson = () => {
-    const zuriVotingContractAddress = "0x7589bC30346Ff76e44584aC27C4EfA5166D613F1";
+
+    const zuriVotingContractAddress = "0x950DFfDBA979E4e4bB8EaaE0d3eA02283dEe0d4A";
     const zuriVotingABI = ZuriVotingABI.abi;
 
+    const [show, setShow] = useState(false);
+    const [show2, setShow2] = useState(false);
     const [data, setData] = useState([])
+    const [showCandidate, setCandidateInfo] = useState([])
     const [showFetchElectionData, setFetchElectionData] = useState([])
+    const [loading, setLoading] = useState(false);
+    const [loading1, setLoading1] = useState(false);
 
     const postName = useRef();
     const candidateIds = useRef();
@@ -27,18 +33,16 @@ const Chairperson = () => {
     const candidateCategoryInput = useRef();
     const voteIDInput = useRef();
     const categoryInput = useRef();
-    const studentAddr = useRef();
     const categoriesInput = useRef();
     const collectAddress = useRef();
     const positionInput = useRef();
     const publicCategory = useRef();
-
-    useEffect(() => {
-        showCategories();
-    }, []);
     
 
-    const [show, setShow] = useState(false);
+    useEffect(() => {
+        showCandidateInfo();
+    }, []);
+    
     // const excelRef = useRef();
 
     const handleClose = () => setShow(false);
@@ -210,7 +214,7 @@ const Chairperson = () => {
         
             console.log("Candidate Added Successfully");
         }else{
-            window.alert("An error occured, unable to start vote");
+            window.alert("An error occured");
             console.log("Ethereum object doesn't exist!");
         }
     }
@@ -282,7 +286,7 @@ const Chairperson = () => {
                 signer
             );
 
-            const studentAddress = studentAddr.current.value;
+            const studentAddress = collectAddress.current.value;
         
             const addStud = await zuriVotingContract.EnrollStudent(
                 studentAddress, {
@@ -292,6 +296,7 @@ const Chairperson = () => {
         
             console.log("Student Added Successfully", addStud);
         }else{
+            setLoading(false);
             window.alert("An error occured, unable to start vote");
             console.log("Ethereum object doesn't exist!");
         }
@@ -370,9 +375,43 @@ const Chairperson = () => {
 
         
             const showCategory = await zuriVotingContract.showCategories();
-            setData(showCategory);
+            setShow(true);
 
             console.log(data);
+        }else{
+            window.alert("An error occured, unable to start vote");
+            console.log("Ethereum object doesn't exist!");
+        }
+    }
+
+    const showCandidateInfo = async() => {
+
+        const { ethereum } = window;
+        if(ethereum){
+            const provider = new ethers.providers.Web3Provider(ethereum);
+            const signer = provider.getSigner();
+            const zuriVotingContract = new ethers.Contract(
+                zuriVotingContractAddress,
+                zuriVotingABI,
+                signer
+            );
+
+        
+            const candidateInfo = await zuriVotingContract.showCandidatesInfo();
+            setCandidateInfo(candidateInfo);
+            
+            console.log(candidateInfo);
+            console.log(showCandidate);
+
+            const filterData = showCandidate.filter((item) => {
+                return (
+                    item[0] === item[0]
+                );
+              });
+              setShow2(filterData);
+
+              console.log(show2);
+
         }else{
             window.alert("An error occured, unable to start vote");
             console.log("Ethereum object doesn't exist!");
@@ -518,14 +557,11 @@ const Chairperson = () => {
                 signer
             );
         
-            const fetchElection = await zuriVotingContract.fetchElection(
-                {
-                    gasLimit: 300000
-                }
-            );
+            const fetchElection = await zuriVotingContract.fetchElection( );
 
             // window.alert(fetchElection.hash);
             setFetchElectionData(fetchElection);
+            console.log(showFetchElectionData);
         
             console.log("Election Info Successful Retrieved", fetchElection);
         }else{
@@ -533,7 +569,6 @@ const Chairperson = () => {
             console.log("Ethereum object doesn't exist!");
         }
     }
-
   
     return (
         <div>
@@ -544,16 +579,13 @@ const Chairperson = () => {
                     <Modal.Title>Cast your vote!</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                {data.map((item) =>{
-                            return(
-                            <Form.Select aria-label="Default select example">
-                          <option> {item} </option>
-                             </Form.Select>
-                                
-                            );
-
-                        }
+                <Form.Select aria-label="Default select example" key="uniqueId1">
+                {showFetchElectionData.map((item) =>{
+                            return(   
+                          <option> {item[0][1]}  </option>
+                            ); }
                         )}
+                         </Form.Select>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={handleVote}>
@@ -567,37 +599,29 @@ const Chairperson = () => {
             <Header head={pageTitle} description={pageDescription} />
 
             {/* Voting table */}
-
+        
             <Table striped bordered hover variant="dark">
-
-                <thead>
-                    <tr>
-                        <th>Position</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                      <td>{data[0]}</td>
-                        <td>
-                            <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}>Vote</button>
-                            
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>{data[1]}</td>
-                        <td>
-                            <button type="button" className="btn btn-outline-primary me-2"onClick={handleShow}>Vote</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>{data[2]}</td>
-                        <td>
-                            <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}>Vote</button>
-                        </td> 
-                    </tr>
-                </tbody>
-            </Table>
+                     <thead>
+                                <tr>
+                                    <th>Position</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {showFetchElectionData.map((item) => {
+                        return(
+                            <tr>
+                            <td>{item[0]}</td>
+                              <td>
+                                  <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}>Vote</button>
+                                  
+                              </td>
+                          </tr>
+                        );
+                    })}
+                            </tbody>
+                    </Table>
+        
 
             <br></br>
             <br></br>
@@ -634,6 +658,21 @@ const Chairperson = () => {
             <br></br>
             <br></br>
 
+            <p className='lead text-capitalize text-center'>Create Categories</p>
+            <Container style={{ width: '30rem' }}>
+                <Form>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Input Category</Form.Label>
+                        <Form.Control ref={categoriesInput} type="text" placeholder="_Category" />
+                    </Form.Group>
+                    <Button className="float-sm-end" onClick={addCategory} variant="primary" align="right" size="sm" active>
+                      Create Category
+                    </Button>
+                </Form>
+
+                <br></br>
+            </Container>
+
             {/* Set up an election */}
             <p className='lead text-capitalize text-center'>Set Up an Election</p>
             <Container style={{ width: '30rem' }}>
@@ -655,23 +694,8 @@ const Chairperson = () => {
                 <br></br>
             </Container>
 
-
-            <p className='lead text-capitalize text-center'>Create Categories</p>
-            <Container style={{ width: '30rem' }}>
-                <Form>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Input Category</Form.Label>
-                        <Form.Control ref={categoriesInput} type="text" placeholder="_Category" />
-                    </Form.Group>
-                    <Button className="float-sm-end" onClick={addCategory} variant="primary" align="right" size="sm" active>
-                      Create Category
-                    </Button>
-                </Form>
-
-                <br></br>
-            </Container>
-
             <p className='lead text-capitalize text-center'>Enroll Candidate</p>
+            <div>{loading === true ? "loading....." : ""}</div>
             <Container style={{ width: '30rem' }}>
                 <Form>
                     <Form.Group className="mb-3">

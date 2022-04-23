@@ -7,14 +7,15 @@ import { Table, Modal, Button, Dropdown, DropdownButton, Form, Container } from 
 
 const Teacher = () => {
 
-    const zuriVotingContractAddress = "0x7589bC30346Ff76e44584aC27C4EfA5166D613F1";
+    const zuriVotingContractAddress = "0x950DFfDBA979E4e4bB8EaaE0d3eA02283dEe0d4A";
     const zuriVotingABI = ZuriVotingABI.abi;
 
     useEffect(() => {
-        showCategories();
+        showCandidateInfo();
     }, []);
 
-    const [data, setData] = useState([])
+    const [data, setData] = useState([]);
+    const [showCandidate, setCandidateInfo] = useState([])
 
     const [show, setShow] = useState(false);
 
@@ -53,6 +54,31 @@ const Teacher = () => {
         }
     }
 
+    const showCandidateInfo = async() => {
+
+        const { ethereum } = window;
+        if(ethereum){
+            const provider = new ethers.providers.Web3Provider(ethereum);
+            const signer = provider.getSigner();
+            const zuriVotingContract = new ethers.Contract(
+                zuriVotingContractAddress,
+                zuriVotingABI,
+                signer
+            );
+
+        
+            const candidateInfo = await zuriVotingContract.showCandidatesInfo();
+            setCandidateInfo(candidateInfo);
+            
+            console.log(candidateInfo);
+            console.log(showCandidate);
+
+        }else{
+            window.alert("An error occured, unable to start vote");
+            console.log("Ethereum object doesn't exist!");
+        }
+    }
+
     return (
         <div>
             {/* Voting Modal */}
@@ -62,12 +88,13 @@ const Teacher = () => {
                     <Modal.Title>Cast your vote!</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <DropdownButton id="dropdown-item-button" title="Dropdown button">
-                        <Dropdown.ItemText>Select a candidate</Dropdown.ItemText>
-                        <Dropdown.Item as="button">Candidate 1</Dropdown.Item>
-                        <Dropdown.Item as="button">Candidate 2</Dropdown.Item>
-                        <Dropdown.Item as="button">Candidate 3</Dropdown.Item>
-                    </DropdownButton>
+                    <Form.Select aria-label="Default select example">
+                    {showCandidate.map((item) =>{
+                            return(   
+                          <option> {item[1]}  </option>
+                            ); }
+                        )}
+                    </Form.Select>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={handleVote}>
@@ -90,26 +117,17 @@ const Teacher = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>{data[0]}</td>
-                        <td>
-                            <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}>Vote</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>{data[1]}</td>
-                        <td>
-                            <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}>Vote</button>
-
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>{data[2]}</td>
-                        <td>
-                            <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}>Vote</button>
-
-                        </td>
-                    </tr>
+                {showCandidate.map((item) => {
+                        return(
+                            <tr>
+                            <td>{item[2]}</td>
+                              <td>
+                                  <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}>Vote</button>
+                                  
+                              </td>
+                          </tr>
+                        );
+                    })}
                 </tbody>
             </Table>
 

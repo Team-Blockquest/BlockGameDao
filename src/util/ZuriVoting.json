@@ -50,24 +50,6 @@
 			"type": "function"
 		},
 		{
-			"inputs": [],
-			"stateMutability": "nonpayable",
-			"type": "constructor"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": false,
-					"internalType": "address",
-					"name": "_address",
-					"type": "address"
-				}
-			],
-			"name": "AddBoardOfDirectors",
-			"type": "event"
-		},
-		{
 			"inputs": [
 				{
 					"internalType": "string",
@@ -85,6 +67,24 @@
 			],
 			"stateMutability": "nonpayable",
 			"type": "function"
+		},
+		{
+			"inputs": [],
+			"stateMutability": "nonpayable",
+			"type": "constructor"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": false,
+					"internalType": "address",
+					"name": "_address",
+					"type": "address"
+				}
+			],
+			"name": "AddBoardOfDirectors",
+			"type": "event"
 		},
 		{
 			"inputs": [
@@ -130,13 +130,6 @@
 			],
 			"name": "CandidateCreated",
 			"type": "event"
-		},
-		{
-			"inputs": [],
-			"name": "clearElection",
-			"outputs": [],
-			"stateMutability": "nonpayable",
-			"type": "function"
 		},
 		{
 			"inputs": [
@@ -195,19 +188,6 @@
 			"type": "function"
 		},
 		{
-			"inputs": [
-				{
-					"internalType": "address",
-					"name": "to",
-					"type": "address"
-				}
-			],
-			"name": "delegate",
-			"outputs": [],
-			"stateMutability": "nonpayable",
-			"type": "function"
-		},
-		{
 			"inputs": [],
 			"name": "endVote",
 			"outputs": [],
@@ -218,7 +198,7 @@
 			"inputs": [
 				{
 					"internalType": "address",
-					"name": "student",
+					"name": "_student",
 					"type": "address"
 				}
 			],
@@ -285,64 +265,6 @@
 			"type": "function"
 		},
 		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": false,
-					"internalType": "address",
-					"name": "_address",
-					"type": "address"
-				}
-			],
-			"name": "RemoveBoardOfDirectors",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": false,
-					"internalType": "address",
-					"name": "recipient",
-					"type": "address"
-				}
-			],
-			"name": "RemoveTeachers",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_start",
-					"type": "uint256"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_end",
-					"type": "uint256"
-				}
-			],
-			"name": "Voting",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": false,
-					"internalType": "address",
-					"name": "_address",
-					"type": "address"
-				}
-			],
-			"name": "givePermission",
-			"type": "event"
-		},
-		{
 			"inputs": [
 				{
 					"internalType": "address",
@@ -362,6 +284,51 @@
 			"type": "function"
 		},
 		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": false,
+					"internalType": "address",
+					"name": "_address",
+					"type": "address"
+				}
+			],
+			"name": "RemoveBoardOfDirectors",
+			"type": "event"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "_address",
+					"type": "address"
+				}
+			],
+			"name": "removeStudents",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": false,
+					"internalType": "address",
+					"name": "recipient",
+					"type": "address"
+				}
+			],
+			"name": "RemoveStudents",
+			"type": "event"
+		},
+		{
 			"inputs": [
 				{
 					"internalType": "address",
@@ -377,6 +344,26 @@
 					"type": "bool"
 				}
 			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": false,
+					"internalType": "address",
+					"name": "recipient",
+					"type": "address"
+				}
+			],
+			"name": "RemoveTeachers",
+			"type": "event"
+		},
+		{
+			"inputs": [],
+			"name": "resetStatus",
+			"outputs": [],
 			"stateMutability": "nonpayable",
 			"type": "function"
 		},
@@ -410,6 +397,19 @@
 			"outputs": [],
 			"stateMutability": "nonpayable",
 			"type": "function"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": false,
+					"internalType": "address",
+					"name": "_address",
+					"type": "address"
+				}
+			],
+			"name": "StudentEnrolled",
+			"type": "event"
 		},
 		{
 			"inputs": [
@@ -456,7 +456,7 @@
 					"type": "uint256"
 				}
 			],
-			"name": "voteFor",
+			"name": "voted",
 			"type": "event"
 		},
 		{
@@ -472,6 +472,35 @@
 				{
 					"internalType": "bool",
 					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "activeElectionArrays",
+			"outputs": [
+				{
+					"internalType": "string",
+					"name": "category",
+					"type": "string"
+				},
+				{
+					"internalType": "bool",
+					"name": "VotesCounted",
+					"type": "bool"
+				},
+				{
+					"internalType": "bool",
+					"name": "makePublic",
 					"type": "bool"
 				}
 			],
@@ -510,17 +539,37 @@
 		{
 			"inputs": [
 				{
-					"internalType": "address",
+					"internalType": "uint256",
 					"name": "",
-					"type": "address"
+					"type": "uint256"
 				}
 			],
-			"name": "boardOfDirectorsAddresses",
+			"name": "candidateArray",
 			"outputs": [
 				{
-					"internalType": "bool",
-					"name": "",
-					"type": "bool"
+					"internalType": "uint256",
+					"name": "id",
+					"type": "uint256"
+				},
+				{
+					"internalType": "string",
+					"name": "name",
+					"type": "string"
+				},
+				{
+					"internalType": "uint256",
+					"name": "category",
+					"type": "uint256"
+				},
+				{
+					"internalType": "address",
+					"name": "candidateAddress",
+					"type": "address"
+				},
+				{
+					"internalType": "uint256",
+					"name": "voteCount",
+					"type": "uint256"
 				}
 			],
 			"stateMutability": "view",
@@ -622,14 +671,19 @@
 					"internalType": "uint256",
 					"name": "",
 					"type": "uint256"
+				},
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
 				}
 			],
-			"name": "categoryRegistrationStatus",
+			"name": "categoryVotes",
 			"outputs": [
 				{
-					"internalType": "bool",
+					"internalType": "uint256",
 					"name": "",
-					"type": "bool"
+					"type": "uint256"
 				}
 			],
 			"stateMutability": "view",
@@ -677,6 +731,44 @@
 		{
 			"inputs": [],
 			"name": "chairperson",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"name": "directorAddress",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "directors",
 			"outputs": [
 				{
 					"internalType": "address",
@@ -784,20 +876,9 @@
 			"type": "function"
 		},
 		{
-			"inputs": [
-				{
-					"internalType": "string",
-					"name": "_category",
-					"type": "string"
-				}
-			],
-			"name": "getWinningCandidateName",
+			"inputs": [],
+			"name": "showCandidatesInfo",
 			"outputs": [
-				{
-					"internalType": "string",
-					"name": "",
-					"type": "string"
-				},
 				{
 					"components": [
 						{
@@ -826,28 +907,9 @@
 							"type": "uint256"
 						}
 					],
-					"internalType": "struct ZuriVoting.Candidate",
+					"internalType": "struct ZuriVoting.Candidate[]",
 					"name": "",
-					"type": "tuple"
-				}
-			],
-			"stateMutability": "view",
-			"type": "function"
-		},
-		{
-			"inputs": [
-				{
-					"internalType": "string",
-					"name": "_category",
-					"type": "string"
-				}
-			],
-			"name": "getWinningCandidateVoteCounts",
-			"outputs": [
-				{
-					"internalType": "uint256",
-					"name": "",
-					"type": "uint256"
+					"type": "tuple[]"
 				}
 			],
 			"stateMutability": "view",
@@ -867,19 +929,40 @@
 			"type": "function"
 		},
 		{
-			"inputs": [
-				{
-					"internalType": "address",
-					"name": "",
-					"type": "address"
-				}
-			],
-			"name": "studentAddresses",
+			"inputs": [],
+			"name": "showInfo",
 			"outputs": [
 				{
-					"internalType": "bool",
+					"components": [
+						{
+							"internalType": "uint256",
+							"name": "id",
+							"type": "uint256"
+						},
+						{
+							"internalType": "string",
+							"name": "name",
+							"type": "string"
+						},
+						{
+							"internalType": "uint256",
+							"name": "category",
+							"type": "uint256"
+						},
+						{
+							"internalType": "address",
+							"name": "candidateAddress",
+							"type": "address"
+						},
+						{
+							"internalType": "uint256",
+							"name": "voteCount",
+							"type": "uint256"
+						}
+					],
+					"internalType": "struct ZuriVoting.Candidate[]",
 					"name": "",
-					"type": "bool"
+					"type": "tuple[]"
 				}
 			],
 			"stateMutability": "view",
@@ -893,12 +976,69 @@
 					"type": "address"
 				}
 			],
-			"name": "teacherAddresses",
+			"name": "studentAddress",
 			"outputs": [
 				{
 					"internalType": "bool",
 					"name": "",
 					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "students",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"name": "teacherAddress",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "teachers",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
 				}
 			],
 			"stateMutability": "view",
@@ -962,7 +1102,7 @@
 					"type": "address"
 				}
 			],
-			"name": "votedForCategory",
+			"name": "votedInCategory",
 			"outputs": [
 				{
 					"internalType": "bool",
@@ -1010,30 +1150,6 @@
 		{
 			"inputs": [],
 			"name": "votersCount",
-			"outputs": [
-				{
-					"internalType": "uint256",
-					"name": "",
-					"type": "uint256"
-				}
-			],
-			"stateMutability": "view",
-			"type": "function"
-		},
-		{
-			"inputs": [
-				{
-					"internalType": "uint256",
-					"name": "",
-					"type": "uint256"
-				},
-				{
-					"internalType": "uint256",
-					"name": "",
-					"type": "uint256"
-				}
-			],
-			"name": "votesForCategory",
 			"outputs": [
 				{
 					"internalType": "uint256",

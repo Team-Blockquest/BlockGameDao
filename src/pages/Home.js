@@ -8,16 +8,18 @@ import ZuriVotingABI from '../util/ZuriVoting.json';
 
 
 const Home = () => {
-    const zuriVotingContractAddress = "0x7589bC30346Ff76e44584aC27C4EfA5166D613F1";
+    const zuriVotingContractAddress = "0x950DFfDBA979E4e4bB8EaaE0d3eA02283dEe0d4A";
     const zuriVotingABI = ZuriVotingABI.abi;
 
     useEffect(() => {
-        showCategories();
+        showCandidateInfo()
     }, []);
 
     // page content
     const pageTitle = 'Home'
     const pageDescription = 'Current Elections'
+
+    const [showCandidate, setCandidateInfo] = useState([])
 
     const [show, setShow] = useState(false);
     const [data, setData] = useState([])
@@ -49,6 +51,31 @@ const Home = () => {
         }
     }
 
+    const showCandidateInfo = async() => {
+
+        const { ethereum } = window;
+        if(ethereum){
+            const provider = new ethers.providers.Web3Provider(ethereum);
+            const signer = provider.getSigner();
+            const zuriVotingContract = new ethers.Contract(
+                zuriVotingContractAddress,
+                zuriVotingABI,
+                signer
+            );
+
+        
+            const candidateInfo = await zuriVotingContract.showCandidatesInfo();
+            setCandidateInfo(candidateInfo);
+            
+            console.log(candidateInfo);
+            console.log(showCandidate);
+
+        }else{
+            window.alert("An error occured, unable to start vote");
+            console.log("Ethereum object doesn't exist!");
+        }
+    }
+
     const handleVote = () => {
         console.log("Vote has been cast");
     }
@@ -66,10 +93,11 @@ const Home = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <Form.Select aria-label="Default select example">
-                        <option>Choose your candidate [Senior Prefect (Boy)]</option>
-                        <option>Elon Musk</option>
-                        <option>Mark Cuban</option>
-                        <option>Jeff Bezos</option>
+                    {showCandidate.map((item) =>{
+                            return(   
+                          <option> {item[1]}  </option>
+                            ); }
+                        )}
                     </Form.Select>
                 </Modal.Body>
                 <Modal.Footer>
@@ -91,27 +119,17 @@ const Home = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-             
-                        <td>{data[0]}</td>
-                        <td>           
-                            <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}>Vote</button>
-                        </td>
-                    </tr>
-                    <tr>
-            
-                        <td>{data[1]}</td>
-                        <td>
-                            <button type="button" className="btn btn-outline-primary me-2" onClick={showCategories}>Vote</button>
-                        </td>
-                    </tr>
-                    <tr>
-        
-                        <td></td>
-                        <td>
-                            {/* <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}></button> */}
-                        </td>
-                    </tr>
+                {showCandidate.map((item) => {
+                        return(
+                            <tr>
+                            <td>{item[2]}</td>
+                              <td>
+                                  <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}>Vote</button>
+                                  
+                              </td>
+                          </tr>
+                        );
+                    })}
                 </tbody>
             </Table>
             
