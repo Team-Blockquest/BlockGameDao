@@ -21,3 +21,21 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+node_modules
+.env
+coverage
+coverage.json
+typechain
+
+#Hardhat files
+cache
+artifacts
+hardhat.config.js
+scripts/sign_message.js
+.gitignore
+.gitignore
+config-overrides.js
+package-lock.json
+package.json
+package-lock.json
