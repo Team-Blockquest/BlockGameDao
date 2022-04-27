@@ -4,15 +4,12 @@ import {ethers } from "ethers";
 import Header from '../components/Header'
 import Meta from '../components/Meta'
 import { Table, Modal, Form, Button } from 'react-bootstrap';
-import ZuriVotingABI from '../util/ZuriVoting.json';
 
 
-const Home = () => {
-    const zuriVotingContractAddress = "0x950DFfDBA979E4e4bB8EaaE0d3eA02283dEe0d4A";
-    const zuriVotingABI = ZuriVotingABI.abi;
+const Home = (contract) => {
 
     useEffect(() => {
-        showCandidateInfo()
+      
     }, []);
 
     // page content
@@ -30,50 +27,19 @@ const Home = () => {
     //Action functions
     const showCategories = async() => {
 
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
         
-            const showCategory = await zuriVotingContract.showCategories();
-            setData(showCategory);
+        const showCategory = await contract.showCategories();
+        setData(showCategory);
 
-            console.log(data);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+        console.log(data);
     }
 
     const showCandidateInfo = async() => {
-
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
-        
-            const candidateInfo = await zuriVotingContract.showCandidatesInfo();
+        const candidateInfo = await contract.showCandidatesInfo();
             setCandidateInfo(candidateInfo);
             
             console.log(candidateInfo);
             console.log(showCandidate);
-
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
     }
 
     const handleVote = () => {

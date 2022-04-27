@@ -1,0 +1,1 @@
+const zuriVotingContractAddress = "0xFdEa669f3d25ff14ee7dC1F39954B9F3E12FB0d6";

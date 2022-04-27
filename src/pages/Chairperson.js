@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import {ethers, BigNumber } from "ethers";
 import Header from '../components/Header';
 import Meta from '../components/Meta';
-import ZuriVotingABI from '../util/ZuriVoting.json';
 // import readXlsxFile from 'read-excel-file';
 import { 
     Table, 
@@ -13,18 +12,19 @@ import {
 } from 'react-bootstrap';
 
 
-const Chairperson = () => {
+const Chairperson = ({post, contract, candidates}) => {
 
-    const zuriVotingContractAddress = "0x950DFfDBA979E4e4bB8EaaE0d3eA02283dEe0d4A";
-    const zuriVotingABI = ZuriVotingABI.abi;
+
+  
 
     const [show, setShow] = useState(false);
     const [show2, setShow2] = useState(false);
     const [data, setData] = useState([])
-    const [showCandidate, setCandidateInfo] = useState([])
+    const [can, setCan] = useState([])
+    const [showCandidate, setCandidateInfoR] = useState([])
     const [showFetchElectionData, setFetchElectionData] = useState([])
     const [loading, setLoading] = useState(false);
-    const [loading1, setLoading1] = useState(false);
+    const [showFiltered, setFiltered] = useState([{}]);
 
     const postName = useRef();
     const candidateIds = useRef();
@@ -37,11 +37,15 @@ const Chairperson = () => {
     const collectAddress = useRef();
     const positionInput = useRef();
     const publicCategory = useRef();
-    
+
 
     useEffect(() => {
-        showCandidateInfo();
-    }, []);
+        post.map((posts) => {
+            return (
+             setFiltered(posts)
+            );
+          });
+    }, [show]);
     
     // const excelRef = useRef();
 
@@ -52,414 +56,206 @@ const Chairperson = () => {
     const pageTitle = 'Chairperson'
     const pageDescription = 'Vote start or stop any election and set up an election'
 
+    
+
+     const candidates2 = candidates.filter(t => t.position === showFiltered);
+     console.log(showFiltered);
+
     const startElection = async () => {
 
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-        
-            const startVote = await zuriVotingContract.startVote(
-                {
-                    gasLimit: 300000
-                }
-            );
-            window.alert(startVote);
-        
-            console.log("Election has been started");
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+        const startVote = await contract.startVote(
+            {
+                gasLimit: 300000
+            }
+        );
+        window.alert(startVote);
+    
+        console.log("Election has been started");
        
     }
 
     const stopElection = async () => {
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-        
-            const endVote = await zuriVotingContract.endVote(
-                {
-                    gasLimit: 300000
-                }
-            );
-            window.alert(endVote);
-        
-            console.log("Election has been stopped");
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+        const endVote = await contract.endVote(
+            {
+                gasLimit: 300000
+            }
+        );
+        window.alert(endVote);
+    
+        console.log("Election has been stopped");
         
     }
 
     const handleVote = async() => {
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
-            const voteID = voteIDInput.current.value;
-            const category = categoryInput.current.value;
-        
-            const Vote = await zuriVotingContract.vote(
-                voteID, category, {
-                    gasLimit: 300000,
-                }
-            );
-            window.alert(Vote);
-        
-            console.log("Vote has been cast");
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+        const voteID = voteIDInput.current.value;
+        const category = categoryInput.current.value;
+    
+        const Vote = await contract.vote(
+            voteID, category, {
+                gasLimit: 300000,
+            }
+        );
+        window.alert(Vote);
+    
+        console.log("Vote has been cast");
     }
     
 
     const addDirector = async() => {
 
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
-            const addressCollection = collectAddress.current.value;
+        const addressCollection = collectAddress.current.value;
         
-            const addDir = await zuriVotingContract.addBoardOfDirectors(
-                addressCollection, {
-                    gasLimit: 300000,
-                  }
-            );
-        
-            console.log("Director Added Successfully", addDir);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+        const addDir = await contract.addBoardOfDirectors(
+            addressCollection, {
+                gasLimit: 300000,
+              }
+        );
+    
+        console.log("Director Added Successfully", addDir);
     }
 
     const removeDirector = async() => {
-
         const { ethereum } = window;
         if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
+            
             const addressCollection = collectAddress.current.value;
         
-            const removeDir = await zuriVotingContract.removeBoardOfDirectors(
+            const removeDir = await contract.removeBoardOfDirectors(
                 addressCollection, {
                     gasLimit: 300000,
                   }
             );
         
             console.log("Director Added Successfully", removeDir);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
     }
+}
 
 
     const addacandidate = async() => {
-
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
-            const candidateAddress = candidateAddressInput.current.value;
-            const candidateName = candidateNameInput.current.value;
-            const candidateCategory = candidateCategoryInput.current.value;
-        
-            const addCan = await zuriVotingContract.addCandidate(
-                candidateCategory, candidateName, candidateAddress, {
-                    gasLimit: 300000,
-                  }
-            );
-            window.alert(addCan);
-        
-            console.log("Candidate Added Successfully");
-        }else{
-            window.alert("An error occured");
-            console.log("Ethereum object doesn't exist!");
-        }
+        const candidateAddress = candidateAddressInput.current.value;
+        const candidateName = candidateNameInput.current.value;
+        const candidateCategory = candidateCategoryInput.current.value;
+    
+        const addCan = await contract.addCandidate(
+            candidateCategory, candidateName, candidateAddress, {
+                gasLimit: 300000,
+              }
+        );
+        window.alert(addCan);
+    
+        console.log("Candidate Added Successfully");
     }
 
     const removeTeacher = async() => {
 
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
-            const addressCollection = collectAddress.current.value;
+        const addressCollection = collectAddress.current.value;
         
-            const removeTeach = await zuriVotingContract.removeTeacher(
-                addressCollection, {
-                    gasLimit: 300000,
-                  }
-            );
-        
-            console.log("Director Added Successfully", removeTeach);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+        const removeTeach = await contract.removeTeacher(
+            addressCollection, {
+                gasLimit: 300000,
+              }
+        );
+    
+        console.log("Director Added Successfully", removeTeach);
     }
 
     const addTeacher = async() => {
-
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
-            const address = collectAddress.current.value;
+        const address = collectAddress.current.value;
         
-            const AddTeacher = await zuriVotingContract.addTeacher(
-                address, {
-                    gasLimit: 300000,
-                  }
-            );
+        const AddTeacher = await contract.addTeacher(
+            address, {
+                gasLimit: 300000,
+              }
+        );
 
-        
-            console.log("Teacher Added Successfully", AddTeacher);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+    
+        console.log("Teacher Added Successfully", AddTeacher);
     }
 
     const EnrollStudent = async() => {
-
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
-            const studentAddress = collectAddress.current.value;
+        const studentAddress = collectAddress.current.value;
         
-            const addStud = await zuriVotingContract.EnrollStudent(
-                studentAddress, {
-                    gasLimit: 300000,
-                  }
-            );
-        
-            console.log("Student Added Successfully", addStud);
-        }else{
-            setLoading(false);
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+        const addStud = await contract.EnrollStudent(
+            studentAddress, {
+                gasLimit: 300000,
+              }
+        );
+    
+        console.log("Student Added Successfully", addStud);
     }
 
     const removeStudent = async() => {
-
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
-            const addressCollection = collectAddress.current.value;
+        const addressCollection = collectAddress.current.value;
         
-            const removeStud = await zuriVotingContract.removeStudents(
-                addressCollection, {
-                    gasLimit: 300000,
-                  }
-            );
-        
-            console.log("Director Added Successfully", removeStud);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+        const removeStud = await contract.removeStudents(
+            addressCollection, {
+                gasLimit: 300000,
+              }
+        );
+    
+        console.log("Director Added Successfully", removeStud);
     }
 
     const SetUpElection = async() => {
 
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
+         // e.preventDefault();
 
-            // e.preventDefault();
-
-            const nameOfPost = postName.current.value;
-            const candidateIDs = candidateIds.current.value;
-            const addList = candidateIDs.split(",");
-            console.log(addList);
-        
-            const setUpElection = await zuriVotingContract.setUpElection(
-                nameOfPost, addList, {
-                    gasLimit: 300000,
-                  }
-            );
-            window.alert(setUpElection.hash);
-            console.log("Election setup Successful");
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+         const nameOfPost = postName.current.value;
+         const candidateIDs = candidateIds.current.value;
+         const addList = candidateIDs.split(",");
+         console.log(addList);
+     
+         const setUpElection = await contract.setUpElection(
+             nameOfPost, addList, {
+                 gasLimit: 300000,
+               }
+         );
+         window.alert(setUpElection.hash);
+         console.log("Election setup Successful");
     }
 
     const showCategories = async() => {
 
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
-        
-            const showCategory = await zuriVotingContract.showCategories();
+        const showCategory = await contract.showCategories();
             setShow(true);
 
             console.log(data);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
     }
 
-    const showCandidateInfo = async() => {
+    const candidateInfoFunction = async() => {
 
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
+        const candidateInfo = await contract.showCandidatesInfo();
+        setCandidateInfoR(candidateInfo);
 
+        let candidates = candidates.filter(t => t.post === post).sort((a, b) => {
+            return 0;
+        });
         
-            const candidateInfo = await zuriVotingContract.showCandidatesInfo();
-            setCandidateInfo(candidateInfo);
-            
-            console.log(candidateInfo);
-            console.log(showCandidate);
+        console.log(candidateInfo);
+        console.log(showCandidate);
 
-            const filterData = showCandidate.filter((item) => {
-                return (
-                    item[0] === item[0]
-                );
-              });
-              setShow2(filterData);
-
-              console.log(show2);
-
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+          console.log(show2);
     }
 
     const addCategory = async() => {
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
-            const category = categoriesInput.current.value;
         
-            const addCategory = await zuriVotingContract.addCategories(
-                category, {
-                    gasLimit: 300000
-                }
-            );
-
-            // window.alert(addCategory.text);
+        const category = categoriesInput.current.value;
         
-            console.log("Category included Successfully", addCategory);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+        const addCategory = await contract.addCategories(
+            category, {
+                gasLimit: 300000
+            }
+        );
+
+        // window.alert(addCategory.text);
+    
+        console.log("Category included Successfully", addCategory);
     }
 
     const compileVote = async() => {
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-
-            const position = positionInput.current.value;
+        const position = positionInput.current.value;
         
-            const Position = await zuriVotingContract.compileVotes(
+            const Position = await contract.compileVotes(
                 position, {
                     gasLimit: 300000
                 }
@@ -468,110 +264,56 @@ const Chairperson = () => {
             // window.alert(addCategory.text);
         
             console.log("Category included Successfully", Position);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
     }
 
     const resetStatus = async() => {
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-        
-            const reset_status = await zuriVotingContract.resetStatus();
+        const reset_status = await contract.resetStatus();
 
         
         
             console.log("Category included Successfully", reset_status);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
     }
 
     const clearElection = async() => {
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-        
-            const reset_status = await zuriVotingContract.clearElection();
+        const reset_status = await contract.clearElection();
 
         
         
-            console.log("Category included Successfully", reset_status);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+        console.log("Category included Successfully", reset_status);
     }
 
     const makeResultPublic = async() => {
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
 
-            const category = publicCategory.current.value;
+        const category = publicCategory.current.value;
         
-            const reset_status = await zuriVotingContract.makeResultPublic(
-                category, {
-                    gasLimit: 300000
-                }
-            );
+        const reset_status = await contract.makeResultPublic(
+            category, {
+                gasLimit: 300000
+            }
+        );
 
-        
-        
-            console.log("Category included Successfully", reset_status);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+    
+    
+        console.log("Category included Successfully", reset_status);
     }
 
     const FetchElection = async() => {
-        const { ethereum } = window;
-        if(ethereum){
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            const signer = provider.getSigner();
-            const zuriVotingContract = new ethers.Contract(
-                zuriVotingContractAddress,
-                zuriVotingABI,
-                signer
-            );
-        
-            const fetchElection = await zuriVotingContract.fetchElection( );
+        const fetchElection = await contract.fetchElection( );
 
-            // window.alert(fetchElection.hash);
-            setFetchElectionData(fetchElection);
-            console.log(showFetchElectionData);
+        // window.alert(fetchElection.hash);
+        setFetchElectionData(fetchElection);
+        console.log(showFetchElectionData);
+
+        setCan(candidates);
         
-            console.log("Election Info Successful Retrieved", fetchElection);
-        }else{
-            window.alert("An error occured, unable to start vote");
-            console.log("Ethereum object doesn't exist!");
-        }
+        console.log("Election Info Successful Retrieved", fetchElection);
     }
+
   
     return (
-        <div>
+      <>
+      
+      <div>
             {/* Voting Modal */}
 
             <Modal show={show} onHide={handleClose}>
@@ -580,15 +322,28 @@ const Chairperson = () => {
                 </Modal.Header>
                 <Modal.Body>
                 <Form.Select aria-label="Default select example" key="uniqueId1">
-                {showFetchElectionData.map((item) =>{
-                            return(   
-                          <option> {item[0][1]}  </option>
-                            ); }
-                        )}
+                {
+                    post.map((posts) => {
+                        const candidates2 = candidates.filter(t => t.position === posts);
+                        console.log(candidates2)
+                        return(
+                          
+                                {
+                                candidates2.map((candidate, index) =>{
+                                    
+                                   console.log(candidate);
+                                    return(   
+                                             <option> {candidate.name} </option>   
+                                               ); }
+                                           )}
+                           
+                        )
+                    })
+                }
                          </Form.Select>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={handleVote}>
+                    <Button variant="secondary" onClick={() => handleVote}>
                         Vote
                     </Button>
                 </Modal.Footer>
@@ -608,17 +363,18 @@ const Chairperson = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                            {showFetchElectionData.map((item) => {
-                        return(
-                            <tr>
-                            <td>{item[0]}</td>
-                              <td>
+                          {post.map((posts, index) => {   
+                              const candidates2 = candidates.filter(t => t.position === posts);
+                              console.log(candidates2)             
+                                    return(      
+                                        <tr>
+                                 <td>{posts}</td>
+                                   <td>
                                   <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}>Vote</button>
-                                  
                               </td>
-                          </tr>
-                        );
-                    })}
+                              </tr>
+                                    );
+                                })}
                             </tbody>
                     </Table>
         
@@ -636,23 +392,23 @@ const Chairperson = () => {
                 </Form>
             </Container>
         
-             <button type="button" className="btn btn-outline-primary me-2" onClick={startElection}>Start Election</button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={stopElection}>Stop Election</button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={addDirector}>Add Directors</button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={addTeacher}>Add Teachers </button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={EnrollStudent}>Add Students</button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={removeStudent}>Remove Students</button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={removeTeacher}>Remove Teachers</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => startElection}>Start Election</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => stopElection}>Stop Election</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => addDirector}>Add Directors</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => addTeacher}>Add Teachers </button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => EnrollStudent}>Add Students</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => removeStudent}>Remove Students</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => removeTeacher}>Remove Teachers</button>
              
 
              <br></br>
             <br></br>
 
             
-            <button type="button" className="btn btn-outline-primary me-2" onClick={removeDirector}>Remove Directors</button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={resetStatus}>Reset Status</button>
-            <button type="button" className="btn btn-outline-primary me-2" onClick={clearElection}>Clear Election</button>
-            <button type="button" className="btn btn-outline-primary me-2" onClick={FetchElection}>Fetch Election</button>
+            <button type="button" className="btn btn-outline-primary me-2" onClick={() => removeDirector}>Remove Directors</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => resetStatus}>Reset Status</button>
+            <button type="button" className="btn btn-outline-primary me-2" onClick={() => clearElection}>Clear Election</button>
+            <button type="button" className="btn btn-outline-primary me-2" onClick={() => FetchElection}>Fetch Election</button>
 
 
             <br></br>
@@ -754,7 +510,9 @@ const Chairperson = () => {
                 <br></br>
                 <br></br>
             </Container>
-        </div>
+        </div> 
+      </>
+    
     )
 }
 

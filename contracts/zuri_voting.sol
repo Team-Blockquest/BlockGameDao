@@ -4,10 +4,9 @@ pragma solidity ^0.8.10;
 contract ZuriVoting{
 
 	// struct to keep record of voters
-	struct Voter {
+	struct StakeHolders {
 		uint weight;
 		bool voted;
-		address delegate;
 		uint vote;
 	}
 
@@ -18,6 +17,7 @@ contract ZuriVoting{
 		uint256 category;
 		address candidateAddress;
 		uint voteCount;
+		string ipfs;
 	}
 
 	// struct ro keep record of the different position 
@@ -28,8 +28,12 @@ contract ZuriVoting{
         bool makePublic;
     }
 
+	 /// @notice The addresses with access to voting
+  	 mapping(address => bool) private Access;
+
+
 	// mapping for list of voters addresses
-	mapping(address => Voter) public voters;
+	mapping(address => StakeHolders) public stakeHolders;
 	
 	//mapping  for array list of candidates
 	mapping(uint => Candidate) public candidates;
@@ -51,15 +55,6 @@ contract ZuriVoting{
     
 	// mapping to covert category from string to uint
     mapping(string => uint256) public Category;
-
-	 // track array of student teacher
-    address[] public teachers;
-
-    // track array of student director
-    address[] public directors;
-    
-    // track array of student
-    address[] public students;
 
 	// mapping for list of directors
     mapping(address => bool) public directorAddress;
@@ -97,29 +92,22 @@ contract ZuriVoting{
 	//  Tracking Category
     uint256 count = 1;
 
+	  modifier onlyAccess {
+         require(Access[msg.sender] == true, "You are not a director");
+         _;
+    }
+
 	 // modifier to give access to only Teachers
      modifier onlyTeachers(){
-        require(directorAddress[msg.sender] == true, "Not a Teacher");
+        require(teacherAddress[msg.sender] == true, "Not a Teacher");
         _;
     }
 
-		 // modifier to give access to only Teachers
-     modifier onlychairperson(){
-        require(msg.sender == chairperson, "Not a Teacher");
+	 // modifier to give access to only Teachers
+     modifier onlyStudents(){
+        require(studentAddress[msg.sender] == true, "Not a Student");
         _;
     }
-
-	// modifier to give access to only Directors
-	modifier onlyDirectors(){
-		require(directorAddress[msg.sender] == true, "Not a Director");
-		_;
-	}
-
-	// modifier to give access to both teachers and directors only 
-	modifier onlyAccess(){
-		require(msg.sender == chairperson || teacherAddress[msg.sender] == true, "Not a Director");
-		_;
-	}
 
 	// modifier to track the status of each state
 	modifier inStatus(STATUS _status){
@@ -151,8 +139,9 @@ contract ZuriVoting{
 
 
 	constructor() {
+		Access[msg.sender] = true;
 		chairperson = msg.sender;
-		voters[chairperson].weight = 1;
+		stakeHolders[chairperson].weight = 1;
 		votersCount++;
 	
 		status = STATUS.INACTIVE;	
@@ -161,7 +150,7 @@ contract ZuriVoting{
 	// function to add a Director
 	function addBoardOfDirectors(address _address)
 	public
-	onlychairperson
+	onlyAccess
 	returns (bool) {
 		directorAddress[_address] = true;
 		emit AddBoardOfDirectors(_address);
@@ -171,7 +160,7 @@ contract ZuriVoting{
 	  // function to add a Teacher
       function addTeacher(address _address)
 	  public
-	 onlychairperson
+	  onlyAccess
 	  returns (bool) {
         teacherAddress[_address] = true;
         emit AddTeachers(_address);
@@ -181,7 +170,7 @@ contract ZuriVoting{
 	// function to remove a Teacher
      function removeTeacher(address addr)
 	 public
-	 onlychairperson
+	 onlyAccess
 	 returns (bool) {
         teacherAddress[addr] = false;
         emit RemoveTeachers(addr);
@@ -191,7 +180,7 @@ contract ZuriVoting{
 	// function to remove a Director
 	function removeBoardOfDirectors(address _address)
 	public
-	onlychairperson
+	onlyAccess
 	returns (bool) {
 		directorAddress[_address] = false;
 		emit RemoveBoardOfDirectors(_address);
@@ -202,13 +191,14 @@ contract ZuriVoting{
     function EnrollStudent(address _student) 
 	public 
 	onlyAccess
+	onlyTeachers
 	inStatus(STATUS.INACTIVE) 
 	returns(bool success){
         require(studentAddress[_student] == false, "already a student");
-        require(!voters[_student].voted,	"The voter already voted.");
-		require(voters[_student].weight == 0);
+        require(!stakeHolders[_student].voted,	"The voter already voted.");
+		require(stakeHolders[_student].weight == 0);
 
-		voters[_student].weight = 1;
+		stakeHolders[_student].weight = 1;
 
         studentAddress[_student] = true;
 
@@ -220,7 +210,8 @@ contract ZuriVoting{
 	// function to remove a Student(only directors)
 	function removeStudents(address _address)
 	public
-	onlychairperson
+	onlyAccess
+	onlyTeachers
 	returns (bool) {
 		studentAddress[_address] = false;
 		emit RemoveStudents(_address);
@@ -238,7 +229,7 @@ contract ZuriVoting{
    // function to trigger the vote to start(only directors can access)
    function startVote() 
    public 
-   onlychairperson
+   onlyAccess
    inStatus(STATUS.INACTIVE)
    {
        status=STATUS.ACTIVE;  
@@ -247,17 +238,17 @@ contract ZuriVoting{
    // function to trigger the vote to end(only directors can access)
    function endVote() 
    public 
-   onlychairperson
+   onlyAccess
    inStatus(STATUS.ACTIVE)
    {
        status= STATUS.ENDED;
    }
 
     // function to add candidate eligible to vote(only directors can access)
-    function addCandidate (string memory _category, string memory candidateName, address candidateAddress) 
+    function addCandidate (string memory _category, string memory candidateName, address candidateAddress, string memory link) 
     public 
-	onlyDirectors 
-	onlychairperson
+	onlyAccess 
+	onlyTeachers
 	inStatus(STATUS.INACTIVE) 
 	returns(bool success) {
 		require(studentAddress[candidateAddress] == true, "Candidate must be student");
@@ -273,7 +264,7 @@ contract ZuriVoting{
             candidatesCount++;
         }
         
-        candidates[candidatesCount] = Candidate(candidatesCount, candidateName, Category[_category], candidateAddress, 0);
+        candidates[candidatesCount] = Candidate(candidatesCount, candidateName, Category[_category], candidateAddress, 0, link);
         
         activeCandidate[candidatesCount] = true;
         candidatesCount ++;
@@ -285,7 +276,7 @@ contract ZuriVoting{
 	// function to add cateogry to be contested for(only directors can access)
 	 function addCategories(string memory _category)
 	 public
-	 onlychairperson
+	 onlyAccess
 	 returns(string memory ){
         
         /// @notice add to the categories array
@@ -319,7 +310,7 @@ contract ZuriVoting{
     // function to setup election 
     function setUpElection (string memory _category,uint256[] memory _candidateID) 
 	public
-	onlychairperson 
+	onlyAccess 
 	returns(bool){
     // create a new election and add to election queue
     election.push(Election(
@@ -335,10 +326,10 @@ contract ZuriVoting{
 	// function to reset the status of election
 	function resetStatus()
 	public
-	onlychairperson
+	onlyAccess
 	inStatus(STATUS.ENDED)
 	{
-		status = STATUS.ACTIVE;
+		status = STATUS.INACTIVE;
 	}
 
 	// function to vote for a candidate in each category
@@ -346,8 +337,8 @@ contract ZuriVoting{
 	public
 	inStatus(STATUS.ACTIVE)
 	returns(string memory, uint256) {
-		require(voters[msg.sender].weight != 0, 'Has no right to vote');
-		require(!voters[msg.sender].voted, 'Already voted.');
+		require(stakeHolders[msg.sender].weight != 0, 'Has no right to vote');
+		require(!stakeHolders[msg.sender].voted, 'Already voted.');
 		require(_candidateId > 0 && _candidateId <= candidatesCount, 'does not exist candidate by given id');
 
 		require(activeCandidate[_candidateId]==true,"Candidate is not registered for this position.");
@@ -358,9 +349,9 @@ contract ZuriVoting{
 		// check that votes are not duplicated
         require(votedInCategory[Category[_category]][msg.sender]== false,"Cannot vote twice for a category..");
 
-		voters[msg.sender].voted = true;
-		voters[msg.sender].vote = _candidateId;
-		candidates[_candidateId].voteCount += voters[msg.sender].weight; 
+		stakeHolders[msg.sender].voted = true;
+		stakeHolders[msg.sender].vote = _candidateId;
+		candidates[_candidateId].voteCount += stakeHolders[msg.sender].weight; 
 
 
 		// avoid duplicate vote in a category.
