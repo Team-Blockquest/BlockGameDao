@@ -1,466 +1,301 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-contract ZuriVoting{
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
-	// struct to keep record of voters
-	struct StakeHolders {
-		uint weight;
-		bool voted;
-		uint vote;
-	}
-
-	// struct to keep record of candidates eligable to be voted for.
-	struct Candidate {
-		uint id;
-		string name;
-		uint256 category;
-		address candidateAddress;
-		uint voteCount;
-		string ipfs;
-	}
-
-	// struct ro keep record of the different position 
-	  struct Election {
-        string category;
-        uint256[] candidatesID;
-		bool VotesCounted;
-        bool makePublic;
+contract ZuriVoting is Pausable {
+    // struct to keep record of candidates eligable to be voted for.
+    struct Candidate {
+        uint256 id;
+        string name;
+        uint256 category;
+        address candidateAddress;
+        uint256 voteCount;
+        string candidateManifesto;
+        string ipfs;
     }
 
-	 /// @notice The addresses with access to voting
-  	 mapping(address => bool) private Access;
-
-
-	// mapping for list of voters addresses
-	mapping(address => StakeHolders) public stakeHolders;
-	
-	//mapping  for array list of candidates
-	mapping(uint => Candidate) public candidates;
-
-	//mapping  to track the winner in a category
-	mapping(string=> Candidate) public categoryWinner;
-
-	//mapping  to track active elections in election
-    mapping(string=> Election) public activeElections;
-
-	// mappping to track category voted 
-    mapping(uint256=>mapping(address=>bool)) public votedInCategory;
-
-	// mapping to track vote for a particaular category
-	mapping(uint256=>mapping(uint256=>uint256)) public categoryVotes;
-
-	// mapping to track active candidates
-	mapping(uint256=>bool) public activeCandidate;
-    
-	// mapping to covert category from string to uint
-    mapping(string => uint256) public Category;
-
-	// mapping for list of directors
-    mapping(address => bool) public directorAddress;
-
-    // mapping for list of teachers
-    mapping(address => bool) public teacherAddress;
-    
-    // mapping for list of student
-    mapping(address => bool) public studentAddress;
-
-	// tracks the address of the owner
-	address public chairperson;
-
-	// tracks the id of winner
-    uint private winningCandidateId;
-
-	// track the number of candidates
-	uint public candidatesCount;
-
-	// tracks the number of voters
-	uint public votersCount;
-
-	// election
-	Election[] public election;
-
-	// election array
-	Election[] public activeElectionArrays;
-
-	// candidate array
-	Candidate[] public candidateArray;
-
-	//array for categories
-    string[] public categories;
-
-	//  Tracking Category
-    uint256 count = 1;
-
-	  modifier onlyAccess {
-         require(Access[msg.sender] == true, "You are not a director");
-         _;
+    constructor(bytes32 merkleRoot) {
+        chairman = msg.sender;
+        Active = false;
+        candidatesCount = 0;
+        root = merkleRoot;
+        publicState = false;
+        Ended = false;
+        Created = false;
     }
 
-	 // modifier to give access to only Teachers
-     modifier onlyTeachers(){
-        require(teacherAddress[msg.sender] == true, "Not a Teacher");
+    // address of chairman
+    address public chairman;
+
+    // name of the position candidates are voting for
+    string public position;
+
+    // description of position voting for
+    string public description;
+
+    // root of the MerkleTree
+    bytes32 public root;
+
+    // count of candidates
+    uint256 public candidatesCount;
+
+    // mapping of address for teachers
+    mapping(address => bool) public teachers;
+
+    // list of stakeholders that have vote
+    mapping(address => bool) public voted;
+
+    // list of candidates
+    mapping(uint256 => Candidate) public candidates;
+
+    // variable to track winning candidate
+    uint256[] public winnerIds;
+
+    // count of vote of winning id
+    uint256 public winnerVoteCount;
+
+    // boolean to track status of election
+    bool public Active;
+
+    // boolean to track status of election
+    bool public Ended;
+
+    // boolean to track if election has been created
+    bool public Created;
+
+    // boolean to keep track of whether result should be public or not
+    bool internal publicState;
+
+    // modifier to specify that election has not ended
+    modifier electionIsStillOn() {
+        require(!Ended, "Sorry, the Election has ended!");
+        _;
+    }
+    // modifier to check that election is active
+    modifier electionIsActive() {
+        require(Active, "Please check back, the election has not started!");
         _;
     }
 
-	 // modifier to give access to only Teachers
-     modifier onlyStudents(){
-        require(studentAddress[msg.sender] == true, "Not a Student");
+    // modifier to specify only the chairman can call the function
+    modifier onlyChairman() {
+        require(msg.sender == chairman, "only chairman can call this function");
         _;
     }
 
-	// modifier to track the status of each state
-	modifier inStatus(STATUS _status){
-		require(status == _status);
-		_;
-	}
-
-	//enum to state the required status
-    enum STATUS{INACTIVE,ACTIVE,ENDED}
-    STATUS status=STATUS.INACTIVE;
-    
-	// emit only when a candidate is created 
-	event CandidateCreated(uint candidatesCount);
-	// emit only after a successful enrollment of student
-	event StudentEnrolled(address _address);
-	// emit only after vote have been recorded
-	event voted(address _address, uint _candidateId);
-	// emit only when a teacher has been added
-    event AddTeachers(address recipient);
-	// emit only when a director has been added
-	event AddBoardOfDirectors(address _address);
-	// emit only when a teacher has been removed
-    event RemoveTeachers(address recipient);
-	// emit only when a student has been removed
-	event RemoveStudents(address recipient);
-	// emit only when a director has been removed
-	event RemoveBoardOfDirectors(address _address);
-
-
-
-	constructor() {
-		Access[msg.sender] = true;
-		chairperson = msg.sender;
-		stakeHolders[chairperson].weight = 1;
-		votersCount++;
-	
-		status = STATUS.INACTIVE;	
-	}
-
-	// function to add a Director
-	function addBoardOfDirectors(address _address)
-	public
-	onlyAccess
-	returns (bool) {
-		directorAddress[_address] = true;
-		emit AddBoardOfDirectors(_address);
-		return true;
-	}
-
-	  // function to add a Teacher
-      function addTeacher(address _address)
-	  public
-	  onlyAccess
-	  returns (bool) {
-        teacherAddress[_address] = true;
-        emit AddTeachers(_address);
-        return true;
+    // modifier to ensure only specified candidate ID are voted for
+    modifier onlyValidCandidate(uint256 _candidateId) {
+        require(
+            _candidateId < candidatesCount && _candidateId >= 0,
+            "Invalid candidate to Vote!"
+        );
+        _;
     }
 
-	// function to remove a Teacher
-     function removeTeacher(address addr)
-	 public
-	 onlyAccess
-	 returns (bool) {
-        teacherAddress[addr] = false;
-        emit RemoveTeachers(addr);
-        return true;
+    // event to emit when the contract is unpaused
+    event ElectionEnded(uint256[] _winnerIds, uint256 _winnerVoteCount);
+    // event to emit when candidate has been created
+    event CandidateCreated(uint256 _candidateId, string _candidateName);
+    // event to emit when a candidate us voted for
+    event VoteForCandidate(uint256 _candidateId, uint256 _candidateVoteCount);
+
+    // error message to be caught when conditions aren't met
+    error ElectionNotStarted();
+    error ElectionHasEnded();
+
+    // This function add candidate to election
+    function addCandidate(
+        string memory _name,
+        string memory _candidateHash,
+        string memory _candidateManifesto
+    ) public whenNotPaused {
+        require(!Active, "Election is Ongoing");
+        require(
+            chairman == msg.sender || teachers[msg.sender] == true,
+            "only teachers/chairman can call this function"
+        );
+        candidates[candidatesCount] = Candidate({
+            id: candidatesCount,
+            name: _name,
+            candidateHash: _candidateHash,
+            candidateManifesto: _candidateManifesto,
+            voteCount: 0
+        });
+        emit CandidateCreated(candidatesCount, _name);
+        candidatesCount++;
     }
 
-	// function to remove a Director
-	function removeBoardOfDirectors(address _address)
-	public
-	onlyAccess
-	returns (bool) {
-		directorAddress[_address] = false;
-		emit RemoveBoardOfDirectors(_address);
-		return true;
-	}
-
-	// This function allow both teachers and the directors add students 
-    function EnrollStudent(address _student) 
-	public 
-	onlyAccess
-	onlyTeachers
-	inStatus(STATUS.INACTIVE) 
-	returns(bool success){
-        require(studentAddress[_student] == false, "already a student");
-        require(!stakeHolders[_student].voted,	"The voter already voted.");
-		require(stakeHolders[_student].weight == 0);
-
-		stakeHolders[_student].weight = 1;
-
-        studentAddress[_student] = true;
-
-		emit StudentEnrolled(_student);
-
-		return true;
+    // verify stakeholders
+    function isValid(bytes32[] memory proof, bytes32 leaf)
+        public
+        view
+        returns (bool)
+    {
+        return MerkleProof.verify(proof, root, leaf);
     }
 
-	// function to remove a Student(only directors)
-	function removeStudents(address _address)
-	public
-	onlyAccess
-	onlyTeachers
-	returns (bool) {
-		studentAddress[_address] = false;
-		emit RemoveStudents(_address);
-		return true;
-	}
-
-	// function to check the status of the election 
-     function electionStatus()
-	 public
-	 view
-	 returns(STATUS){
-        return status;
+    // This function start election
+    function startElection() public whenNotPaused onlyChairman {
+        Active = true;
     }
 
-   // function to trigger the vote to start(only directors can access)
-   function startVote() 
-   public 
-   onlyAccess
-   inStatus(STATUS.INACTIVE)
-   {
-       status=STATUS.ACTIVE;  
-   }
-
-   // function to trigger the vote to end(only directors can access)
-   function endVote() 
-   public 
-   onlyAccess
-   inStatus(STATUS.ACTIVE)
-   {
-       status= STATUS.ENDED;
-   }
-
-    // function to add candidate eligible to vote(only directors can access)
-    function addCandidate (string memory _category, string memory candidateName, address candidateAddress, string memory link) 
-    public 
-	onlyAccess 
-	onlyTeachers
-	inStatus(STATUS.INACTIVE) 
-	returns(bool success) {
-		require(studentAddress[candidateAddress] == true, "Candidate must be student");
-		require(teacherAddress[candidateAddress] == false || 
-		directorAddress[candidateAddress] == false, 
-		"Teacher/Directors cannot be Candidate");
-	
-        require(activeCandidate[candidatesCount]==false,"Candidate is enrolled for an election");
-    
-        require(Category[_category] != 0,"Category does not exist...");
-
-		 if(candidatesCount == 0){
-            candidatesCount++;
-        }
-        
-        candidates[candidatesCount] = Candidate(candidatesCount, candidateName, Category[_category], candidateAddress, 0, link);
-        
-        activeCandidate[candidatesCount] = true;
-        candidatesCount ++;
-        
-        emit CandidateCreated(candidatesCount);
-		return true;
-	}
-	
-	// function to add cateogry to be contested for(only directors can access)
-	 function addCategories(string memory _category)
-	 public
-	 onlyAccess
-	 returns(string memory ){
-        
-        /// @notice add to the categories array
-        categories.push(_category);
-        
-        /// @notice add to the Category map
-        Category[_category] = count;
-        count++;	
-        return _category;
+    //This function to end election
+    function endElection() public whenNotPaused onlyChairman {
+        Ended = true;
+        _calcElectionWinner();
+        emit ElectionEnded(winnerIds, winnerVoteCount);
     }
 
+    // This function that allows users vote
+    function _vote(uint256 _candidateId, address _voter)
+        internal
+        whenNotPaused
+        onlyValidCandidate(_candidateId)
+    {
+        require(!voted[_voter], "Voter has already Voted!");
+        voted[_voter] = true;
+        candidates[_candidateId].voteCount++;
 
-	  // function to show all categories of positions available for election
-    function showCategories() 
-	public 
-	view
-	onlyAccess 
-	returns(string[] memory){
-        return categories;
+        emit VoteForCandidate(_candidateId, candidates[_candidateId].voteCount);
     }
 
-	 // function to display all candidate info
-	function showCandidatesInfo()
-	public
-	view
-	onlyAccess
-	returns(Candidate[] memory){
-		return candidateArray;
-	}
-
-    // function to setup election 
-    function setUpElection (string memory _category,uint256[] memory _candidateID) 
-	public
-	onlyAccess 
-	returns(bool){
-    // create a new election and add to election queue
-    election.push(Election(
-        _category,
-        _candidateID,
-        false,
-		false
-    ));
-
-    return true;
-    }
-
-	// function to reset the status of election
-	function resetStatus()
-	public
-	onlyAccess
-	inStatus(STATUS.ENDED)
-	{
-		status = STATUS.INACTIVE;
-	}
-
-	// function to vote for a candidate in each category
-	function vote(uint _candidateId, string memory _category)
-	public
-	inStatus(STATUS.ACTIVE)
-	returns(string memory, uint256) {
-		require(stakeHolders[msg.sender].weight != 0, 'Has no right to vote');
-		require(!stakeHolders[msg.sender].voted, 'Already voted.');
-		require(_candidateId > 0 && _candidateId <= candidatesCount, 'does not exist candidate by given id');
-
-		require(activeCandidate[_candidateId]==true,"Candidate is not registered for this position.");
-    
-        // check that a candidate is valid for a vote in a category
-        require(candidates[_candidateId].category == Category[_category],"Candidate is not Registered for this Office!");
-
-		// check that votes are not duplicated
-        require(votedInCategory[Category[_category]][msg.sender]== false,"Cannot vote twice for a category..");
-
-		stakeHolders[msg.sender].voted = true;
-		stakeHolders[msg.sender].vote = _candidateId;
-		candidates[_candidateId].voteCount += stakeHolders[msg.sender].weight; 
-
-
-		// avoid duplicate vote in a category.
-        uint256 votes = categoryVotes[_candidateId][Category[_category]]+=1;
-        candidates[_candidateId].voteCount = votes;
-        votedInCategory[Category[_category]][msg.sender]= true;
-
-		votersCount++;
-        emit voted(msg.sender, _candidateId);
-    
-        return (_category, _candidateId);
-	} 
-
-	//function to get the wininng candidateId in each category
-   function getWinningCandidateId(string memory _category) 
-   inStatus(STATUS.ENDED)
-   onlyAccess
-   public
-   view
-       returns (uint) {
-       return categoryWinner[_category].id;
-    }
-    
-
-	//function to compile the result of vote per category
-	function compileVotes(string memory _position) 
-	public
-	onlyAccess
-	inStatus(STATUS.ENDED) 
-	returns (uint total, uint winnigVotes, Candidate[] memory){
-        uint winningVoteCount = 0;
-        uint totalVotes=0;
-        uint256 winnerId;
-        uint winningCandidateIndex = 0;
-        Candidate[] memory items = new Candidate[](candidatesCount);
-        
-       
-        for (uint i = 0; i < candidatesCount; i++) {
-            if (candidates[i + 1].category == Category[_position]) {
-                totalVotes += candidates[i + 1].voteCount;        
-                if ( candidates[i + 1].voteCount > winningVoteCount) {
-                    
-                    winningVoteCount = candidates[i + 1].voteCount;
-                    uint currentId = candidates[i + 1].id;
-                    winnerId= currentId;
-                    // winningCandidateIndex = i;
-                    Candidate storage currentItem = candidates[currentId];
-                    items[winningCandidateIndex] = currentItem;
-                    winningCandidateIndex += 1;
-                }
+    // This function that calculates the election winner
+    function _calcElectionWinner()
+        internal
+        whenNotPaused
+        returns (uint256, uint256[] memory)
+    {
+        for (uint256 i; i < candidatesCount; i++) {
+            if (candidates[i].voteCount > winnerVoteCount) {
+                winnerVoteCount = candidates[i].voteCount;
+                delete winnerIds;
+                winnerIds.push(candidates[i].id);
+            } else if (candidates[i].voteCount == winnerVoteCount) {
+                winnerIds.push(candidates[i].id);
             }
-
-        } 
-
-        //update Election status
-        activeElections[_position].VotesCounted=true;
-        //update winner for the category
-        categoryWinner[_position]=candidates[winnerId];
-        return (totalVotes, winningVoteCount, items); 
-    }
-
-    // function to view the result of election
-    function viewResults() 
-	public 
-	onlyAccess
-	inStatus(STATUS.ENDED) 
-	view 
-	returns(Candidate[] memory,string[] memory) {
-        //require that  
-        uint256 length = categories.length;
-        uint256 countA = 0;
-        //create a memory array
-        Candidate[] memory results = new Candidate[](length);
-        string[] memory _category = new string[](length);
-        for(uint256 i =0;i<length;i++){
-            //call getWinningCategory by Id
-            results[countA] = categoryWinner[categories[i]];
-            _category[countA] = categories[i];
-            countA++;
         }
-        return (results,_category);
-    } 
-      
-	  // function to make result public
-	  function makeResultPublic(string memory _category)
-	  public
-	  onlyAccess
-	  inStatus(STATUS.ENDED)
-	  returns(Candidate memory,string memory) {
-        activeElections[_category].makePublic=true;
-        return (categoryWinner[_category],_category);
-    } 
 
-	// function to fetch election 
-    function fetchElection()
-	public
-	view
-	onlyAccess
-	returns (Election[] memory) {
-        return election;
+        return (winnerVoteCount, winnerIds);
     }
 
-	// function to show candidate info
-	function showInfo()
-	public
-	view
-	onlyAccess
-	returns(Candidate[] memory){
-		return candidateArray;
-	}
-    
+    // This function to add teachers to mapping
+    function addTeacher(address _newTeacher) public whenNotPaused {
+        require(
+            chairman == msg.sender || teachers[msg.sender] == true,
+            "only teachers/chairman can call this function"
+        );
+        teachers[_newTeacher] = true;
+    }
+
+    // This function to add teachers to mapping
+    function removeTeacher(address _teacher) public whenNotPaused {
+        require(
+            chairman == msg.sender || teachers[msg.sender] == true,
+            "only teachers/chairman can call this function"
+        );
+        teachers[_teacher] = false;
+    }
+
+    // This function change chairman
+    function changeChairman(address _newChairman)
+        public
+        whenNotPaused
+        onlyChairman
+    {
+        chairman = _newChairman;
+    }
+
+    // This function close the election
+    function closeElection() public onlyChairman {
+        Created = false;
+        chairman = msg.sender;
+        Active = false;
+        Ended = false;
+        Created = false;
+        candidatesCount = 0;
+        publicState = false;
+        delete winnerIds;
+        winnerVoteCount = 0;
+    }
+
+    // This function makes result public
+    function makeResultPublic() public {
+        require(Ended, "Sorry, the Election has not ended");
+        require(
+            chairman == msg.sender || teachers[msg.sender] == true,
+            "only teachers/chairman can make results public"
+        );
+        publicState = true;
+    }
+
+    // This function shows the winner of the election
+    function getWinner() public view returns (uint256, uint256[] memory) {
+        require(publicState, "The Results must be made public");
+        return (winnerVoteCount, winnerIds);
+    }
+
+    //This function to check if addr is chairman
+    function isChairman() public view returns (bool) {
+        return chairman == msg.sender;
+    }
+
+    //This function to check if election has been started
+    function isTeacher() public view returns (bool) {
+        return teachers[msg.sender];
+    }
+
+    // Check If election has been created
+    function isCreated() public view returns (bool) {
+        return Created;
+    }
+
+    // This function to check if election has been started
+    function isStarted() public view returns (bool) {
+        return Active;
+    }
+
+    // This function to check if election has been ended
+    function isEnded() public view returns (bool) {
+        return Ended;
+    }
+
+    // This function get candidate ids
+    function getCandidates() public view returns (Candidate[] memory) {
+        Candidate[] memory id = new Candidate[](candidatesCount);
+        for (uint256 i = 0; i < candidatesCount; i++) {
+            Candidate storage candidate = candidates[i];
+            id[i] = candidate;
+        }
+        return id;
+    }
+
+    // This function allows stakeholders vote in an election
+    function vote(uint256 _candidateId, bytes32[] calldata hexProof)
+        public
+        electionIsStillOn
+        electionIsActive
+    {
+        require(
+            isValid(hexProof, keccak256(abi.encodePacked(msg.sender))),
+            "sorry, only stakeholders are eligible to vote"
+        );
+
+        _vote(_candidateId, msg.sender);
+    }
+
+    // This function start an election
+    function setUpElection(string[] memory _prop) public whenNotPaused {
+        require(!Active, "Election is Ongoing");
+        require(_prop.length > 0, "atleast one person should contest");
+        require(
+            chairman == msg.sender || teachers[msg.sender] == true,
+            "only teachers/chairman can call this function"
+        );
+
+        position = _prop[0];
+        description = _prop[1];
+        Created = true;
+    }
 }
