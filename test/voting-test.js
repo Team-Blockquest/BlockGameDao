@@ -1,129 +1,186 @@
-const { expect, assert } = require("chai");
-const { ethers } = require("hardhat");
+const { expect } = require("chai");
+const { ethers , upgrades} = require("hardhat");
+const { MerkleTree } = require('merkletreejs')
+const keccak256 = require('keccak256')
+
+let contract;
+let merkleroot;
+let stakeholders;
+let rootHash;
+let getStakeholders = async () => { stakeholders = await ethers.getSigners() };
+let merkleTree;
+
+describe("Create Merkle Root", function () {
+  it("Should generate the root hash", async function () {
+   
+    await getStakeholders();
+    let stakeholdersarr = [];
+    for (let i = 0; i < 5; i++){
+      stakeholdersarr.push(stakeholders[i].address);
+    }
+
+// this will creates a new array "leafnodes" by hashing the index of all stakeholders addresses using keccak256
+//then we create a merkletree object 
+      const leafnodes = stakeholdersarr.map(addr => keccak256(addr))
+
+      merkleTree = new MerkleTree(leafnodes, keccak256, {sortPairs: true})
+
+      rootHash = merkleTree.getRoot()
+
+      console.log("stakeholder's merkle tree\n", merkleTree.toString())
+      
+      const buf2hex = x => '0x' + x.toString('hex');
+
+      merkleroot = buf2hex(rootHash);
+
+      console.log("the root hash is\n", merkleroot)
+  });
+});
 
 
-describe("ZuriVoting", () => {
-  let voting;
-  before(async () => {
-    const ZuriVoting = await ethers.getContractFactory("ZuriVoting");
-    voting = await ZuriVoting.deploy();
+describe("ZuriElection", function () {
+  it("Should Deploy the contract Successfully", async function () {
+    const ZuriElection = await ethers.getContractFactory("ZuriElection");
+
+    console.log("deploying ZuriElection contract>>>>>>>>>>>>>")
+      const proxy = await ZuriElection.deploy(merkleroot);
+      console.log(merkleroot);
+      contract = await proxy.deployed();
+
+      console.log("ZuriElection Contract Address is...\n", proxy.address);
+  });
+});
+
+
+describe("Vote Election", function () {
+    it("Should not be able to vote because he has voted before", async function(){
+        console.log(stakeholders.length);
+        const hexProof = merkleTree.getHexProof(keccak256(stakeholders[1].address));               
+        await expect(contract.connect(stakeholders[1]).vote(5, hexProof)).to.be.revertedWith("Please check back, the election has not started!");
+    })
     
-  })
-
-  //ADD CANDIDATE
-  describe("addCandidate", () => {
-    it("Add candidate for election", async () => {
-      await voting.deployed();
-      //candidate  added
-      await voting.addCandidate("Harry")
-      assert(true);
+    it("Should be able to vote election", async function () {
+        const owner = stakeholders[0];
+        const prop = ["President", "To Elect the next president"]
+        await contract.connect(owner).setUpElection(prop);
+        await contract.connect(owner).addCandidate("Ernest Opara", "Hash", "Hiii");
+        await contract.connect(owner).addCandidate("Adeola Opeyemi", "Hash", "Hiii");
+        await contract.connect(stakeholders[0]).startElection();
+        const hexProof = merkleTree.getHexProof(keccak256(stakeholders[3].address));               
+        const vote = await contract.connect(stakeholders[3]).vote(1, hexProof);
+        const voted = await vote.wait();
+        expect(voted.status).to.be.equal(1);
+    });
+  
+    it("Should be able to return candidates", async function(){
+        const candidates = await contract.connect(stakeholders[0]).getCandidates();
+        expect(candidates.length).to.be.equal(2);
     })
 
-    it("can't add one candidate multiple times", async () => {
-      await voting.deployed();
-      
-      
-      try {
-        await voting.addCandidate("");
-        assert(false)
-      } catch (error) {
-        assert(error)
-      }
+    it("Should not be able to vote if wrong proof", async function(){
+        console.log(stakeholders.length);
+        const hexProof = merkleTree.getHexProof(keccak256(stakeholders[8].address));               
+        await expect(contract.connect(stakeholders[8]).vote(1, hexProof)).to.be.revertedWith("sorry, only stakeholders are eligible to vote");
     })
-  })
 
-  //CAST VOTE
-  describe("vote", function () {
-    it("cannot vote when voting is disabled", async function () {
-      await voting.deployed();
-      try {
-      //disable voting
-      //try voting
-        await voting.disableVoting();
-        await voting.vote(0)
-        assert(false);
-      } catch (error) {
-        assert(error)
-      }
-    });
-  
-    it("increment candidates vote by 1", async function () {
+    it("Should not be able to vote if wrong candidate ID", async function(){
+        console.log(stakeholders.length);
+        const hexProof = merkleTree.getHexProof(keccak256(stakeholders[1].address));               
+        await expect(contract.connect(stakeholders[1]).vote(5, hexProof)).to.be.revertedWith("Invalid candidate to Vote!");
+    })
 
-      await voting.deployed();
+    it("Should not be able to vote because he has voted before", async function(){
+        console.log(stakeholders.length);
+        const hexProof = merkleTree.getHexProof(keccak256(stakeholders[3].address));               
+        await expect(contract.connect(stakeholders[3]).vote(0, hexProof)).to.be.revertedWith("Voter has already Voted!");
+    })
 
-      //enable voting
-      await voting.enableVoting();
-      await voting.vote(0);
-      
-      assert(true)
-    });
-  
-    it("Voters can only vote once", async function () {
-      await voting.deployed();
-      try {
-
-        await voting.vote(0);
-        assert(false);
-      } catch (error) {
-        assert(error)
-      }
-  
     
-    });
-  
-    it("Voters can vote for only one candidate", async function () {
-      
-      await voting.deployed();
-      try {
-        //adding another candidate
-        //try voting for new candidate
-        await voting.addCandidate("test")
-        await voting.vote(1);
-        assert(false);
-      } catch (error) {
-        assert(error)
-      }
-    });
-  
 
-  
+    
+
+    it("Can't Make Result public until end of election", async function(){
+        console.log(stakeholders.length);
+        const hexProof = merkleTree.getHexProof(keccak256(stakeholders[0].address));               
+        await expect(contract.connect(stakeholders[0]).makeResultPublic()).to.be.revertedWith("Sorry, the Election has not ended");
+    })
+
+    it("Should not be able to vote because he has voted before", async function(){
+        console.log(stakeholders.length);
+        await contract.connect(stakeholders[0]).endElection();
+        const hexProof = merkleTree.getHexProof(keccak256(stakeholders[1].address));               
+        await expect(contract.connect(stakeholders[1]).vote(5, hexProof)).to.be.revertedWith("Sorry, the Election has ended!");
+    })
+
+    it("Non Chairman or Teacher can not make Result public", async function(){
+        console.log(stakeholders.length);              
+        await expect(contract.connect(stakeholders[3]).makeResultPublic()).to.be.revertedWith("only teachers/chairman can make results public");
+    })
+
+    it("Get Winner", async function(){
+        console.log(stakeholders.length);              
+        await expect(contract.connect(stakeholders[3]).getWinner()).to.be.revertedWith("The Results must be made public");
+    })
+
+    it("Can Make Result public ", async function(){
+        console.log(stakeholders.length);              
+        const makePublic = await contract.connect(stakeholders[0]).makeResultPublic();
+        const madePublic = await makePublic.wait();
+        expect(madePublic.status).to.be.equal(1);
+    })
+
+    it("Get Winner", async function(){
+        console.log(stakeholders.length);              
+        const makePublic = await contract.connect(stakeholders[0]).getWinner();
+        expect(makePublic[0]).to.be.equal(1);
+    })
+
+
+    it("None other than chairman should be able to close election", async function(){
+        await expect(contract.connect(stakeholders[3]).closeElection()).to.be.revertedWith("only chairman can call this function");
+    })
+
+    it("Chairman Should be able to close election", async function(){
+        console.log(stakeholders.length);              
+        const makePublic = await contract.connect(stakeholders[0]).closeElection();
+        const madePublic = await makePublic.wait();
+        expect(madePublic.status).to.be.equal(1);
+    })
+
+
+
+
   });
 
 
-  //GET ALL CANDIDATES
-  describe("EnrollStudent", function () {
+  describe("Helper Functions", function () {
 
-    it("Should return names and ids of candidates", async function () {
+    it("Should be able know if election has started", async function(){
+        const isStart = await contract.connect(stakeholders[0]).isStarted();
+        expect(isStart).to.be.equal(false);
+    })
 
-      await voting.deployed();
+    it("Should be able to know if election has ended", async function(){
+        const isEnd = await contract.connect(stakeholders[0]).isEnded();
+        expect(isEnd).to.be.equal(false);
+    })
 
-      //get the candidates
-      const candidate = await voting.EnrollStudent();
-  
-  
-      expect(await candidate[0][0]).to.equal("atanda");
-    });
+    it("Should be able to know if chairman", async function(){
+        const isChairman = await contract.connect(stakeholders[0]).isChairman();
+        expect(isChairman).to.be.equal(true);
+    })
+
+    it("Should be able to know if election has ended", async function(){
+        await contract.connect(stakeholders[0]).addTeacher(stakeholders[1].address);
+        const isTeacher = await contract.connect(stakeholders[1]).isTeacher();
+        expect(isTeacher).to.be.equal(true);
+    })
+    
+    it("Should be able to know if chairman", async function(){
+        const isCreated = await contract.connect(stakeholders[0]).isCreated();
+        expect(isCreated).to.be.equal(false);
+    })
+
   });
 
 
-  //GETS ALL RESULT
-  describe("compileVotes", function () {
-    it("Should return names and votecounts", async function () {
-      await voting.deployed();
-  
-      //add more candidates
-
-      await voting.addCandidate("demo")
-
-      const result = await voting.compileResult();
-  
-      //test for the values
-      expect(await result[0][0]).to.equal("Harry");
-      expect(await result[1][0].toNumber()).to.equal(1);
-      expect(await result[0][1]).to.equal("test");
-      expect(await result[1][1].toNumber()).to.equal(0);
-      expect(await result[0][2]).to.equal("demo");
-      expect(await result[1][2].toNumber()).to.equal(0);
-    });
-  });
-})
