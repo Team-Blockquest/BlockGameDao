@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {ethers, BigNumber } from "ethers";
 import Header from '../components/Header';
 import Meta from '../components/Meta';
+import Home from './Home'
 // import readXlsxFile from 'read-excel-file';
 import { 
     Table, 
@@ -12,27 +13,22 @@ import {
 } from 'react-bootstrap';
 
 
-const Chairperson = ({post, contract, candidates}) => {
+const Chairperson = ({post, contract, candidates, isResultView, sendCandidatesData}) => {
 
 
   
 
     const [show, setShow] = useState(false);
-    const [show2, setShow2] = useState(false);
-    const [data, setData] = useState([])
-    const [can, setCan] = useState([])
-    const [showCandidate, setCandidateInfoR] = useState([])
-    const [showFetchElectionData, setFetchElectionData] = useState([])
-    const [loading, setLoading] = useState(false);
-    const [showFiltered, setFiltered] = useState([{}]);
+    const [noOfVotes, setNoOfVotes] = useState(0);
+    const [lastCandidateID, setLastCandidateID] = useState(candidates.length);
+    const [showWiningCandidate, setWiningCandidate] = useState("");
+    const [showResultView, setResultView] = useState(false);
 
-    const postName = useRef();
-    const candidateIds = useRef();
+
     const candidateAddressInput = useRef();
     const candidateNameInput = useRef();
     const candidateCategoryInput = useRef();
-    const voteIDInput = useRef();
-    const categoryInput = useRef();
+    const candidateIpfsInput = useRef();
     const categoriesInput = useRef();
     const collectAddress = useRef();
     const positionInput = useRef();
@@ -40,26 +36,20 @@ const Chairperson = ({post, contract, candidates}) => {
 
 
     useEffect(() => {
-        post.map((posts) => {
-            return (
-             setFiltered(posts)
-            );
-          });
-    }, [show]);
+        if (isResultView) {
+            let sum_ = candidates.reduce((acc, curr) => acc + curr.votesCount, 0);
+            setNoOfVotes(sum_/post.length);  
+            console.log(sum_); 
+        }
+    }, [candidates, isResultView]);
     
     // const excelRef = useRef();
 
     const handleClose = () => setShow(false);
-    const handleShow = () => setShow(true);
 
     // page content
     const pageTitle = 'Chairperson'
     const pageDescription = 'Vote start or stop any election and set up an election'
-
-    
-
-     const candidates2 = candidates.filter(t => t.position === showFiltered);
-     console.log(showFiltered);
 
     const startElection = async () => {
 
@@ -86,10 +76,8 @@ const Chairperson = ({post, contract, candidates}) => {
         
     }
 
-    const handleVote = async() => {
-        const voteID = voteIDInput.current.value;
-        const category = categoryInput.current.value;
-    
+    const handleVote = async(voteID, category) => {
+       
         const Vote = await contract.vote(
             voteID, category, {
                 gasLimit: 300000,
@@ -135,13 +123,19 @@ const Chairperson = ({post, contract, candidates}) => {
         const candidateAddress = candidateAddressInput.current.value;
         const candidateName = candidateNameInput.current.value;
         const candidateCategory = candidateCategoryInput.current.value;
+        const candidateIpfs = candidateIpfsInput.current.value;
+
+        let id_ = lastCandidateID + 1;
     
         const addCan = await contract.addCandidate(
-            candidateCategory, candidateName, candidateAddress, {
+            candidateCategory, candidateName, candidateAddress, candidateIpfs, {
                 gasLimit: 300000,
               }
         );
         window.alert(addCan);
+        sendCandidatesData(id_, candidateName, candidateCategory, candidateIpfs);
+
+        setLastCandidateID(id_)
     
         console.log("Candidate Added Successfully");
     }
@@ -196,45 +190,18 @@ const Chairperson = ({post, contract, candidates}) => {
         console.log("Director Added Successfully", removeStud);
     }
 
-    const SetUpElection = async() => {
-
-         // e.preventDefault();
-
-         const nameOfPost = postName.current.value;
-         const candidateIDs = candidateIds.current.value;
-         const addList = candidateIDs.split(",");
-         console.log(addList);
-     
-         const setUpElection = await contract.setUpElection(
-             nameOfPost, addList, {
-                 gasLimit: 300000,
-               }
-         );
-         window.alert(setUpElection.hash);
-         console.log("Election setup Successful");
-    }
-
     const showCategories = async() => {
 
         const showCategory = await contract.showCategories();
-            setShow(true);
 
-            console.log(data);
     }
 
     const candidateInfoFunction = async() => {
 
         const candidateInfo = await contract.showCandidatesInfo();
-        setCandidateInfoR(candidateInfo);
 
-        let candidates = candidates.filter(t => t.post === post).sort((a, b) => {
-            return 0;
-        });
+
         
-        console.log(candidateInfo);
-        console.log(showCandidate);
-
-          console.log(show2);
     }
 
     const addCategory = async() => {
@@ -250,6 +217,13 @@ const Chairperson = ({post, contract, candidates}) => {
         // window.alert(addCategory.text);
     
         console.log("Category included Successfully", addCategory);
+    }
+
+    const viewResult = async() => {
+
+        const result2 = await contract.viewResults();
+
+        console.log(result2);
     }
 
     const compileVote = async() => {
@@ -274,40 +248,28 @@ const Chairperson = ({post, contract, candidates}) => {
             console.log("Category included Successfully", reset_status);
     }
 
-    const clearElection = async() => {
-        const reset_status = await contract.clearElection();
-
-        
-        
-        console.log("Category included Successfully", reset_status);
-    }
-
-    const makeResultPublic = async() => {
-
+    const getWinningCandidateName = async() => {
         const category = publicCategory.current.value;
         
-        const reset_status = await contract.makeResultPublic(
+        const reset_status = await contract.getWinningCandidateId(
             category, {
                 gasLimit: 300000
             }
         );
 
-    
-    
-        console.log("Category included Successfully", reset_status);
+        setWiningCandidate(reset_status)
+        console.log(reset_status)
     }
 
-    const FetchElection = async() => {
-        const fetchElection = await contract.fetchElection( );
+    const makeResultPublic = async() => {
 
-        // window.alert(fetchElection.hash);
-        setFetchElectionData(fetchElection);
-        console.log(showFetchElectionData);
+        const result = await contract.publicResults();
 
-        setCan(candidates);
-        
-        console.log("Election Info Successful Retrieved", fetchElection);
+        setResultView(true)
+
+        console.log(result)
     }
+
 
   
     return (
@@ -315,38 +277,10 @@ const Chairperson = ({post, contract, candidates}) => {
       
       <div>
             {/* Voting Modal */}
-
             <Modal show={show} onHide={handleClose}>
                 <Modal.Header closeButton>
                     <Modal.Title>Cast your vote!</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
-                <Form.Select aria-label="Default select example" key="uniqueId1">
-                {
-                    post.map((posts) => {
-                        const candidates2 = candidates.filter(t => t.position === posts);
-                        console.log(candidates2)
-                        return(
-                          
-                                {
-                                candidates2.map((candidate, index) =>{
-                                    
-                                   console.log(candidate);
-                                    return(   
-                                             <option> {candidate.name} </option>   
-                                               ); }
-                                           )}
-                           
-                        )
-                    })
-                }
-                         </Form.Select>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => handleVote}>
-                        Vote
-                    </Button>
-                </Modal.Footer>
             </Modal>
 
             {/* Meta component[with helmet] and header to display page*/}
@@ -358,19 +292,29 @@ const Chairperson = ({post, contract, candidates}) => {
             <Table striped bordered hover variant="dark">
                      <thead>
                                 <tr>
-                                    <th>Position</th>
-                                    <th>Actions</th>
+                                <th>Category Name</th>
+                              <th>Vote</th>
                                 </tr>
                             </thead>
                             <tbody>
-                          {post.map((posts, index) => {   
-                              const candidates2 = candidates.filter(t => t.position === posts);
-                              console.log(candidates2)             
+                          {post.map((posts) => {   
+                              const candidates2 = candidates.filter(t => t.position === posts);         
                                     return(      
                                         <tr>
                                  <td>{posts}</td>
-                                   <td>
-                                  <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}>Vote</button>
+                                 <td>
+                                   <Modal.Body>
+                <Form.Select aria-label="Default select example" key="uniqueId1">
+                                 {candidates2.map((candidate1) => {   
+                              return(
+   
+                             <option> {candidate1.name} </option>
+                            
+                               );
+                            })}
+                  </Form.Select>
+                </Modal.Body>
+                    <button type="button" className="btn btn-outline-primary me-2" onClick={() => handleVote(1, posts)}>Vote</button>                         
                               </td>
                               </tr>
                                     );
@@ -392,26 +336,29 @@ const Chairperson = ({post, contract, candidates}) => {
                 </Form>
             </Container>
         
-             <button type="button" className="btn btn-outline-primary me-2" onClick={() => startElection}>Start Election</button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={() => stopElection}>Stop Election</button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={() => addDirector}>Add Directors</button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={() => addTeacher}>Add Teachers </button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={() => EnrollStudent}>Add Students</button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={() => removeStudent}>Remove Students</button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={() => removeTeacher}>Remove Teachers</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => startElection()}>Start Election</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => stopElection()}>Stop Election</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => addDirector()}>Add Directors</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => addTeacher()}>Add Teachers </button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => EnrollStudent()}>Add Students</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => removeStudent()}>Remove Students</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => removeTeacher()}>Remove Teachers</button>
              
 
              <br></br>
             <br></br>
 
             
-            <button type="button" className="btn btn-outline-primary me-2" onClick={() => removeDirector}>Remove Directors</button>
-             <button type="button" className="btn btn-outline-primary me-2" onClick={() => resetStatus}>Reset Status</button>
-            <button type="button" className="btn btn-outline-primary me-2" onClick={() => clearElection}>Clear Election</button>
-            <button type="button" className="btn btn-outline-primary me-2" onClick={() => FetchElection}>Fetch Election</button>
+            <button type="button" className="btn btn-outline-primary me-2" onClick={() => removeDirector()}>Remove Directors</button>
+             <button type="button" className="btn btn-outline-primary me-2" onClick={() => resetStatus()}>Reset Status</button>
+            <button type="button" className="btn btn-outline-primary me-2" onClick={() => makeResultPublic()}>
+                Make Result Public
+                </button>
+            <button type="button" className="btn btn-outline-primary me-2" onClick={() => viewResult()}>View Result</button>
 
 
             <br></br>
+           
             <br></br>
 
             <p className='lead text-capitalize text-center'>Create Categories</p>
@@ -429,29 +376,10 @@ const Chairperson = ({post, contract, candidates}) => {
                 <br></br>
             </Container>
 
-            {/* Set up an election */}
-            <p className='lead text-capitalize text-center'>Set Up an Election</p>
-            <Container style={{ width: '30rem' }}>
-                <Form>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Election Name [Post to be contested]</Form.Label>
-                        <Form.Control ref={postName} type="text" placeholder="Senior Prefect" />
-                    </Form.Group>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Candidate Id[In Commas]</Form.Label>
-                        <Form.Control  ref={candidateIds} type="text" placeholder="1,2,3"/>
-                    </Form.Group>
-                
-                    <Button className="float-sm-end" onClick={SetUpElection} variant="primary" align="right" size="sm" active>
-                      Create Election
-                    </Button>
-                </Form>
-
                 <br></br>
-            </Container>
+          
 
             <p className='lead text-capitalize text-center'>Enroll Candidate</p>
-            <div>{loading === true ? "loading....." : ""}</div>
             <Container style={{ width: '30rem' }}>
                 <Form>
                     <Form.Group className="mb-3">
@@ -465,15 +393,23 @@ const Chairperson = ({post, contract, candidates}) => {
                     <Form.Group className="mb-3">
                         <Form.Label>Candidate Name</Form.Label>
                         <Form.Control  ref={candidateNameInput} type="text" placeholder="_Name"/>
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                        <Form.Label>Ipfs Link</Form.Label>
+                        <Form.Control  ref={candidateIpfsInput} type="text" placeholder="_Link"/>
                     </Form.Group>
                 
                 
-                    <Button className="float-sm-end" onClick={addacandidate} variant="primary" align="right" size="sm" active>
+                    <Button className="float-sm-end" onClick={() => addacandidate()} variant="primary" align="right" size="sm" active>
                       Add Candidate
                     </Button>
                 </Form>
 
                 <br></br>
+                <br></br>
+                <p>No Of Posts: {post.length}</p>
+                <p>Amounts Of Votes: {noOfVotes}</p>
+                <p>CandidatesByVotes: {Math.round(noOfVotes/post.length)}</p>
                 <br></br>
             </Container>
 
@@ -494,7 +430,9 @@ const Chairperson = ({post, contract, candidates}) => {
                 <br></br>
             </Container>
 
-            <p className='lead text-capitalize text-center'>Make Vote Public</p>
+        
+
+            <p className='lead text-capitalize text-center'>Get Wininning Candidate Per Category</p>
             <Container style={{ width: '30rem' }}>
                 <Form>
                     <Form.Group className="mb-3">
@@ -502,8 +440,10 @@ const Chairperson = ({post, contract, candidates}) => {
                         <Form.Control ref={publicCategory} type="text" placeholder="_category" />
                     </Form.Group>
 
-                    <Button className="float-sm-end" onClick={makeResultPublic} variant="primary" align="right" size="sm" active>
-                      Publish Result
+                    <p>{showWiningCandidate}</p>
+
+                    <Button className="float-sm-end" onClick={() => getWinningCandidateName()} variant="primary" align="right" size="sm" active>
+                     Get getWinningCandidateName
                     </Button>
                 </Form>
 

@@ -12,29 +12,52 @@ import NotFound from "./pages/NotFound";
 import React, { useState, useEffect, useRef } from "react";
 import {ethers, BigNumber} from "ethers";
 import zuriVotingABI from './zuriVoting.json';
-import zuriVotingContractAddress from './contractAddress';
 
 const App = () => {
 
     const [posts, setPosts] = useState([]);
     const [contract, setContract] = useState({});
     const [candidates, setCandidates] = useState([]);
+    const [electionPhase, setElectionPhase] = useState(0);
 
-    const zuriVotingContractAddress = "0xFdEa669f3d25ff14ee7dC1F39954B9F3E12FB0d6"
+    const zuriVotingContractAddress = "0x24101A43d371B8ad712E5e325aB03C1ebC1Af6ea"
+
+    
+    useEffect(() => {
+
+      const { ethereum } = window;
+      const provider = new ethers.providers.Web3Provider(ethereum);
+      const signer = provider.getSigner();
+      const zuriVotingContract = new ethers.Contract(
+          zuriVotingContractAddress,
+          zuriVotingABI.abi,
+          signer
+      );
+
+      setContract(zuriVotingContract);
+      console.log(zuriVotingContract)
+
+      getStatus(zuriVotingContract).then(status => {
+           setElectionPhase(status)
+        })
+
+      handleGetCandidates(zuriVotingContract);
+
+  }, [])
 
       const handleGetResults = async (contract) => {
         // let p = await contract.methods.getCandidates().call()
         // return p;
-        let eventFilter = contract.filters.CandidatesInfo()
+        let eventFilter = contract.filters.result()
         let k = await contract.queryFilter(eventFilter)
         let result_ = []
         k.map((ele, id) => {
           let p = {}
-          p.ID = ele.returnValues.Candid.ID
-          p.name = ele.returnValues.Candid.name
-          p.ipfs = ele.returnValues.Candid.ipfs
-          p.position = ele.returnValues.Candid.position
-          p.votesCount = ele.reurnValues.votes
+          p.ID = ele["args"].Candidate.ID
+          p.name = ele["args"].Candidate.name
+          p.ipfs = ele["args"].Candidate.ipfs
+          p.category = ele["args"].Candidate.category
+          p.votesCount = ele["args"].votes
     
           result_.push(p)
           
@@ -45,35 +68,20 @@ const App = () => {
     
       }
 
-      useEffect(() => {
-
-        const { ethereum } = window;
-        const provider = new ethers.providers.Web3Provider(ethereum);
-        const signer = provider.getSigner();
-        const zuriVotingContract = new ethers.Contract(
-            zuriVotingContractAddress,
-            zuriVotingABI.abi,
-            signer
-        );
-
-        setContract(zuriVotingContract);
-
-        handleGetCandidates(zuriVotingContract);
-
-    }, [])
 
     const handleGetCandidates = async (contract) => {
-        let eventFilter = contract.filters.CandidatesInfo()
-        let k = await contract.queryFilter(eventFilter, 10)
+        let eventFilter = contract.filters.CandidatesInfo();
+        let k = await contract.queryFilter(eventFilter)
+        console.log(k)
         let result_ = []
         let res = []
         k.map((ele) => {
           let p = {}
           p.id = ele["args"].ID
           p.name = ele["args"].name
-          p.ipfs = ele["args"].ipfs
           p.position = ele["args"].position
           p.address = ele["args"].candidateAddress
+          p.ipfs = ele["args"].ipfs
     
           if (!res.includes(ele["args"].position)) {
             res.push(ele["args"].position)
@@ -88,12 +96,36 @@ const App = () => {
         setCandidates(result_)
       }
 
+      const getStatus = async() => {
+        
+        const status = await contract.electionStatus();
+        return status;
+        
+    }
+
+      const updateCandidates = (id, name_, post, ipfs) => {
+        const data = {
+          ID: id,
+          name: name_,
+          CID: ipfs,
+          position: post
+        }
+    
+        setCandidates([...candidates, data])
+      }
+
+      useEffect(() => {
+        if(electionPhase === 2){
+          handleGetResults(contract)
+        }       
+      }, [contract, electionPhase])
+
     return (
         <Layout>
             <Container>
                 <Routes>
                     <Route path="/" element={<Home post= {posts} contract = {contract} candidates = {candidates}/>} exact />
-                    <Route path="/chairperson" element={ <Chairperson post= {posts} contract = {contract} candidates = {candidates}/>} />
+                    <Route path="/chairperson" element={ <Chairperson post= {posts} contract = {contract} candidates = {candidates} isResultView = {true} sendCandidatesData= {updateCandidates}/>} />
                     <Route path="/teacher" element={<Teacher  post= {posts} contract = {contract} candidates = {candidates}/>} />
                     <Route element={<NotFound />} />
                 </Routes>

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.10;
 
 contract ZuriVoting{
-
 	// struct to keep record of voters
 	struct StakeHolders {
 		uint weight;
@@ -14,19 +13,12 @@ contract ZuriVoting{
 	struct Candidate {
 		uint id;
 		string name;
-		uint256 category;
+		string category;
 		address candidateAddress;
 		uint voteCount;
 		string ipfs;
 	}
 
-	// struct ro keep record of the different position 
-	  struct Election {
-        string category;
-        uint256[] candidatesID;
-		bool VotesCounted;
-        bool makePublic;
-    }
 
 	 /// @notice The addresses with access to voting
   	 mapping(address => bool) private Access;
@@ -40,9 +32,6 @@ contract ZuriVoting{
 
 	//mapping  to track the winner in a category
 	mapping(string=> Candidate) public categoryWinner;
-
-	//mapping  to track active elections in election
-    mapping(string=> Election) public activeElections;
 
 	// mappping to track category voted 
     mapping(uint256=>mapping(address=>bool)) public votedInCategory;
@@ -65,6 +54,9 @@ contract ZuriVoting{
     // mapping for list of student
     mapping(address => bool) public studentAddress;
 
+	/// @notice The number of votes received per candidate
+  	mapping (uint256 => uint256) private votesReceived;
+
 	// tracks the address of the owner
 	address public chairperson;
 
@@ -77,22 +69,22 @@ contract ZuriVoting{
 	// tracks the number of voters
 	uint public votersCount;
 
-	// election
-	Election[] public election;
-
-	// election array
-	Election[] public activeElectionArrays;
-
 	// candidate array
 	Candidate[] public candidateArray;
 
 	//array for categories
     string[] public categories;
 
+
 	//  Tracking Category
     uint256 count = 1;
 
 	  modifier onlyAccess {
+         require(Access[msg.sender] == true || teacherAddress[msg.sender] == true, "You are not a director");
+         _;
+    }
+
+	 modifier onlyDirectors {
          require(Access[msg.sender] == true, "You are not a director");
          _;
     }
@@ -119,8 +111,8 @@ contract ZuriVoting{
     enum STATUS{INACTIVE,ACTIVE,ENDED}
     STATUS status=STATUS.INACTIVE;
     
-	// emit only when a candidate is created 
-	event CandidateCreated(uint candidatesCount);
+	 /// @notice An event thats emitted to show the details of the candidates 
+  	event CandidatesInfo(uint256 ID, string name, string position, string ipfs, address candidateAddress);
 	// emit only after a successful enrollment of student
 	event StudentEnrolled(address _address);
 	// emit only after vote have been recorded
@@ -136,7 +128,7 @@ contract ZuriVoting{
 	// emit only when a director has been removed
 	event RemoveBoardOfDirectors(address _address);
 
-
+	 event result(Candidate Candidate, uint256 votes);
 
 	constructor() {
 		Access[msg.sender] = true;
@@ -144,33 +136,32 @@ contract ZuriVoting{
 		stakeHolders[chairperson].weight = 1;
 		votersCount++;
 	
+
 		status = STATUS.INACTIVE;	
 	}
 
 	// function to add a Director
 	function addBoardOfDirectors(address _address)
 	public
-	onlyAccess
+	onlyDirectors
 	returns (bool) {
 		directorAddress[_address] = true;
 		emit AddBoardOfDirectors(_address);
 		return true;
 	}
-
 	  // function to add a Teacher
       function addTeacher(address _address)
 	  public
-	  onlyAccess
+	  onlyDirectors
 	  returns (bool) {
         teacherAddress[_address] = true;
         emit AddTeachers(_address);
         return true;
     }
-
 	// function to remove a Teacher
      function removeTeacher(address addr)
 	 public
-	 onlyAccess
+	 onlyDirectors
 	 returns (bool) {
         teacherAddress[addr] = false;
         emit RemoveTeachers(addr);
@@ -180,7 +171,7 @@ contract ZuriVoting{
 	// function to remove a Director
 	function removeBoardOfDirectors(address _address)
 	public
-	onlyAccess
+	onlyDirectors
 	returns (bool) {
 		directorAddress[_address] = false;
 		emit RemoveBoardOfDirectors(_address);
@@ -191,11 +182,9 @@ contract ZuriVoting{
     function EnrollStudent(address _student) 
 	public 
 	onlyAccess
-	onlyTeachers
 	inStatus(STATUS.INACTIVE) 
 	returns(bool success){
         require(studentAddress[_student] == false, "already a student");
-        require(!stakeHolders[_student].voted,	"The voter already voted.");
 		require(stakeHolders[_student].weight == 0);
 
 		stakeHolders[_student].weight = 1;
@@ -211,7 +200,6 @@ contract ZuriVoting{
 	function removeStudents(address _address)
 	public
 	onlyAccess
-	onlyTeachers
 	returns (bool) {
 		studentAddress[_address] = false;
 		emit RemoveStudents(_address);
@@ -229,7 +217,7 @@ contract ZuriVoting{
    // function to trigger the vote to start(only directors can access)
    function startVote() 
    public 
-   onlyAccess
+   onlyDirectors
    inStatus(STATUS.INACTIVE)
    {
        status=STATUS.ACTIVE;  
@@ -238,7 +226,7 @@ contract ZuriVoting{
    // function to trigger the vote to end(only directors can access)
    function endVote() 
    public 
-   onlyAccess
+   onlyDirectors
    inStatus(STATUS.ACTIVE)
    {
        status= STATUS.ENDED;
@@ -247,15 +235,11 @@ contract ZuriVoting{
     // function to add candidate eligible to vote(only directors can access)
     function addCandidate (string memory _category, string memory candidateName, address candidateAddress, string memory link) 
     public 
-	onlyAccess 
-	onlyTeachers
+	onlyDirectors 
 	inStatus(STATUS.INACTIVE) 
 	returns(bool success) {
-		require(studentAddress[candidateAddress] == true, "Candidate must be student");
-		require(teacherAddress[candidateAddress] == false || 
-		directorAddress[candidateAddress] == false, 
-		"Teacher/Directors cannot be Candidate");
-	
+		require(stakeHolders[msg.sender].weight != 0, "Must be a stakeHolder");
+
         require(activeCandidate[candidatesCount]==false,"Candidate is enrolled for an election");
     
         require(Category[_category] != 0,"Category does not exist...");
@@ -264,19 +248,19 @@ contract ZuriVoting{
             candidatesCount++;
         }
         
-        candidates[candidatesCount] = Candidate(candidatesCount, candidateName, Category[_category], candidateAddress, 0, link);
+        candidates[candidatesCount] = Candidate(candidatesCount, candidateName, _category, candidateAddress,0, link);
         
         activeCandidate[candidatesCount] = true;
         candidatesCount ++;
         
-        emit CandidateCreated(candidatesCount);
+        emit CandidatesInfo(candidatesCount, candidateName, _category, link , candidateAddress);
 		return true;
 	}
 	
 	// function to add cateogry to be contested for(only directors can access)
 	 function addCategories(string memory _category)
 	 public
-	 onlyAccess
+	 onlyDirectors
 	 returns(string memory ){
         
         /// @notice add to the categories array
@@ -307,26 +291,10 @@ contract ZuriVoting{
 		return candidateArray;
 	}
 
-    // function to setup election 
-    function setUpElection (string memory _category,uint256[] memory _candidateID) 
-	public
-	onlyAccess 
-	returns(bool){
-    // create a new election and add to election queue
-    election.push(Election(
-        _category,
-        _candidateID,
-        false,
-		false
-    ));
-
-    return true;
-    }
-
 	// function to reset the status of election
 	function resetStatus()
 	public
-	onlyAccess
+	onlyDirectors
 	inStatus(STATUS.ENDED)
 	{
 		status = STATUS.INACTIVE;
@@ -337,30 +305,29 @@ contract ZuriVoting{
 	public
 	inStatus(STATUS.ACTIVE)
 	returns(string memory, uint256) {
-		require(stakeHolders[msg.sender].weight != 0, 'Has no right to vote');
+		require(stakeHolders[msg.sender].weight != 0, "Has no right to vote");
 		require(!stakeHolders[msg.sender].voted, 'Already voted.');
-		require(_candidateId > 0 && _candidateId <= candidatesCount, 'does not exist candidate by given id');
+		require(_candidateId > 0 && _candidateId <= candidatesCount, "does not exist candidate by given id");
 
 		require(activeCandidate[_candidateId]==true,"Candidate is not registered for this position.");
+		
     
-        // check that a candidate is valid for a vote in a category
-        require(candidates[_candidateId].category == Category[_category],"Candidate is not Registered for this Office!");
-
-		// check that votes are not duplicated
-        require(votedInCategory[Category[_category]][msg.sender]== false,"Cannot vote twice for a category..");
-
+        
+		if(keccak256(abi.encodePacked(candidates[_candidateId].category)) == keccak256(abi.encodePacked(_category))){
+			
 		stakeHolders[msg.sender].voted = true;
 		stakeHolders[msg.sender].vote = _candidateId;
-		candidates[_candidateId].voteCount += stakeHolders[msg.sender].weight; 
-
 
 		// avoid duplicate vote in a category.
         uint256 votes = categoryVotes[_candidateId][Category[_category]]+=1;
         candidates[_candidateId].voteCount = votes;
         votedInCategory[Category[_category]][msg.sender]= true;
 
+		 votesReceived[_candidateId] += 1;
+
 		votersCount++;
-        emit voted(msg.sender, _candidateId);
+		 emit voted(msg.sender, _candidateId);
+		}
     
         return (_category, _candidateId);
 	} 
@@ -371,8 +338,8 @@ contract ZuriVoting{
    onlyAccess
    public
    view
-       returns (uint) {
-       return categoryWinner[_category].id;
+       returns (string memory) {
+       return categoryWinner[_category].name;
     }
     
 
@@ -390,7 +357,7 @@ contract ZuriVoting{
         
        
         for (uint i = 0; i < candidatesCount; i++) {
-            if (candidates[i + 1].category == Category[_position]) {
+            if (keccak256(abi.encodePacked(candidates[i + 1].category)) == keccak256(abi.encodePacked(_position))) {
                 totalVotes += candidates[i + 1].voteCount;        
                 if ( candidates[i + 1].voteCount > winningVoteCount) {
                     
@@ -405,9 +372,6 @@ contract ZuriVoting{
             }
 
         } 
-
-        //update Election status
-        activeElections[_position].VotesCounted=true;
         //update winner for the category
         categoryWinner[_position]=candidates[winnerId];
         return (totalVotes, winningVoteCount, items); 
@@ -435,32 +399,21 @@ contract ZuriVoting{
         return (results,_category);
     } 
       
-	  // function to make result public
-	  function makeResultPublic(string memory _category)
-	  public
-	  onlyAccess
-	  inStatus(STATUS.ENDED)
-	  returns(Candidate memory,string memory) {
-        activeElections[_category].makePublic=true;
-        return (categoryWinner[_category],_category);
-    } 
-
-	// function to fetch election 
-    function fetchElection()
-	public
-	view
-	onlyAccess
-	returns (Election[] memory) {
-        return election;
+	   /**
+   * @notice function allows Stakeholders except students to make result visible to all
+   */
+  function publicResults()
+  public 
+  onlyAccess
+  {
+    require(studentAddress[msg.sender] != true);
+    for(uint256 i=1; i<=count; i++)
+    {
+      emit result(candidates[i], votesReceived[i]);
     }
 
-	// function to show candidate info
-	function showInfo()
-	public
-	view
-	onlyAccess
-	returns(Candidate[] memory){
-		return candidateArray;
-	}
+  }
+
+	
     
 }

@@ -3,10 +3,10 @@ import React, { useState, useEffect, useRef } from "react";
 import {ethers } from "ethers";
 import Header from '../components/Header'
 import Meta from '../components/Meta'
-import { Table, Modal, Form, Button } from 'react-bootstrap';
+import { Table, Modal, Form, Button, Container } from 'react-bootstrap';
 
 
-const Home = (contract) => {
+const Home = ({post, contract, candidates, isResultView}) => {
 
     useEffect(() => {
       
@@ -25,26 +25,20 @@ const Home = (contract) => {
     const handleShow = () => setShow(true);
 
     //Action functions
-    const showCategories = async() => {
 
-        
-        const showCategory = await contract.showCategories();
-        setData(showCategory);
 
-        console.log(data);
-    }
-
-    const showCandidateInfo = async() => {
-        const candidateInfo = await contract.showCandidatesInfo();
-            setCandidateInfo(candidateInfo);
-            
-            console.log(candidateInfo);
-            console.log(showCandidate);
-    }
-
-    const handleVote = () => {
+    const handleVote = async(voteID, category) => {
+       
+        const Vote = await contract.vote(
+            voteID, category, {
+                gasLimit: 300000,
+            }
+        );
+        window.alert(Vote);
+    
         console.log("Vote has been cast");
     }
+    
 
     return (
         <div>
@@ -57,15 +51,6 @@ const Home = (contract) => {
                 <Modal.Header closeButton>
                     <Modal.Title>Cast your vote!</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
-                    <Form.Select aria-label="Default select example">
-                    {showCandidate.map((item) =>{
-                            return(   
-                          <option> {item[1]}  </option>
-                            ); }
-                        )}
-                    </Form.Select>
-                </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={handleVote}>
                         Vote
@@ -75,30 +60,81 @@ const Home = (contract) => {
 
             {/* Voting table */}
 
-            <Table striped bordered hover variant="dark">
+   {!isResultView && <> <Table striped bordered hover variant="dark">
+                     <thead>
+                                <tr>
+                                <th>Category Name</th>
+                              <th>Vote</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {post.map((posts) => {   
+                              const candidates2 = candidates.filter(t => t.position === posts);         
+                                    return(      
+                                        <tr>
+                                 <td>{posts}</td>
+                                 <td>
+                                   <Modal.Body>
+                <Form.Select aria-label="Default select example" key="uniqueId1">
+                                 {candidates2.map((candidate1) => {   
+                              return(
+   
+                             <option> {candidate1.name} </option>
+                            
+                               );
+                            })}
+                  </Form.Select>
+                </Modal.Body>
+                    <button type="button" className="btn btn-outline-primary me-2" onClick={() => handleVote(1, posts)}>Vote</button>                         
+                              </td>
+                              </tr>
+                                    );
+                                })}
+                            </tbody>
+                    </Table>
+                    </>
+                    }
+    
+           
+                    { isResultView && <>
+           <Table striped bordered hover variant="dark">
                 <thead>
                     <tr>
                      
         
-                        <th>Candidate Name</th>
-                        <th>Actions</th>
+                        <th>Category Name</th>
+                        <th>Winners Per Category</th>
                     </tr>
                 </thead>
                 <tbody>
-                {showCandidate.map((item) => {
-                        return(
-                            <tr>
-                            <td>{item[2]}</td>
-                              <td>
-                                  <button type="button" className="btn btn-outline-primary me-2" onClick={handleShow}>Vote</button>
-                                  
+                {
+                post.map((posts) => {   
+                              const candidates2 = candidates.filter(t => t.position === posts);         
+                                    return(      
+                                        <tr>
+                                 <td>{posts}</td>
+                                 <td>
+                                   <Modal.Body>
+               
+                                 {candidates2.map((candidate1) => {   
+                              return(
+   
+                             <p> {candidate1.name} </p>
+                            
+                               );
+                            })}
+                 
+                </Modal.Body>
+        
                               </td>
-                          </tr>
-                        );
-                    })}
+                              </tr>
+                                    );
+                                })
+                        }
                 </tbody>
             </Table>
-            
+            </>
+}
         </div>
     )
 }
